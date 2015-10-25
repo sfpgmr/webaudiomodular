@@ -87,6 +87,7 @@ class AudioNode_ extends NodeViewData {
 		this.height = Math.max(this.height,inputHeight,outputHeight);
 		this.temp = {};
 		this.statusPlay = STATUS_PLAY_NOT_PLAYED;// not played.
+		this.panel = null;
 	}
 	
 	// 1つだけだとノードの削除で2つの場合はコネクションの削除
@@ -140,7 +141,7 @@ class AudioNode_ extends NodeViewData {
 						}
 					}
 				}
-				
+
 				if(n.to.node === node){
 					if(n.from.param){
 						// from パラメータあり
@@ -160,7 +161,6 @@ class AudioNode_ extends NodeViewData {
 							n.from.node.disconnect(n.to.node.audioNode,n.from.param);
 							disconnected = true;
 						}
-					
 					} else {
 						// from パラメータなし
 						if(n.to.param){

@@ -131,38 +131,6 @@ function initUI(){
 		delete d.line;
 	});
 	
-	// パネル用Dragその他
-	dragPanel = d3.behavior.drag()
-//	.origin(function(d){ return d;})
-	.on('dragstart',function(d){
-		var sel = d3.select(this.parentNode);
-		d3.select('#content')
-		.insert('div')
-		.attr({id:'prop-dummy',
-			'class':'prop-panel prop-dummy'})
-		.style({
-			left:sel.style('left'),
-			top:sel.style('top')
-		});
-	})
-	.on("drag", function (d) {
-		var dummy = d3.select('#prop-dummy');
-
-		var x = parseFloat(dummy.style('left')) + d3.event.dx;
-		var y = parseFloat(dummy.style('top')) + d3.event.dy;
-		
-		dummy.style({'left':x + 'px','top':y + 'px'});
-	})
-	.on('dragend',function(d){
-		var sel = d3.select(this.parentNode);
-		var dummy = d3.select('#prop-dummy');
-		sel.style(
-			{'left':dummy.style('left'),'top':dummy.style('top')}
-		);
-		dummy.remove();
-	});
-	d3.select('#panel-header').call(dragPanel);
-
 	d3.select('#panel-close')
 	.on('click',function(){d3.select('#prop-panel').style('visibility','hidden');d3.event.returnValue = false;d3.event.preventDefault();});
 
@@ -208,6 +176,7 @@ function initUI(){
 	}
 	
 	d3.select('#content')
+	.datum({})
 	.on('contextmenu',function(){
 		showAudioNodePanel(this);
 	});
@@ -243,6 +212,7 @@ function draw() {
 	})
 	.on('click.remove',function(d){
 		if(d3.event.shiftKey){
+			d.panel && d.panel.isShow && d.panel.dispose();
 			AudioNode_.remove(d);
 			draw();
 		}
@@ -438,15 +408,19 @@ function makePos(x1,y1,x2,y2){
 
 // プロパティパネルの表示
 function showPanel(d){
-	d3.select('#panel-header').text(d.name);
-	var panel = d3.select('#prop-panel').select('#panel-content');
-	panel.select('table').remove();
-	var table = panel.append('table');
-	// var th = table.append('thead')
-	// .append('tr');
-	// th.append('th').text('パラメータ');
-	// th.append('th').text('値');
 
+	d3.event.returnValue = false;
+	d3.event.cancelBubble = true;
+	d3.event.preventDefault();
+
+	if(d.panel && d.panel.isShow) return ;
+
+	d.panel = new Panel();
+	d.panel.x = d.x;
+	d.panel.y = d.y;
+	d.panel.header.text(d.name);
+	
+	var table = d.panel.article.append('table');
 	var tbody = table.append('tbody').selectAll('tr').data(d.params);
 	var tr = tbody.enter()
 	.append('tr');
@@ -458,7 +432,6 @@ function showPanel(d){
 	.on('change',function(d){
 		let sel = d3.select(this);
 		let value = this.value;
-		console.log(value);
 		let vn = parseFloat(value);
 		if(isNaN(vn)){
 			d.set(value);
@@ -466,20 +439,26 @@ function showPanel(d){
 			d.set(vn);
 		}
 	});
-	
-	 d3.select('#prop-panel').style('visibility','visible');
-	 d3.event.returnValue = false;
-	 d3.event.preventDefault();
-	 d3.event.cancelBubble = true;
+	d.panel.show();
+
 }
 
 // ノード挿入パネルの表示
 function showAudioNodePanel(d){
-	d3.select('#panel-header').text('AudioNodeの挿入');
-	var panel = d3.select('#prop-panel').select('#panel-content');
-	panel.select('table').remove();
-	var table = panel.append('table');
+	 d3.event.returnValue = false;
+	 d3.event.preventDefault();
 
+	if(d.panel){
+		if(d.panel.isShow)
+			return;
+	}
+	
+	d.panel = new Panel();
+	d.panel.x = d3.event.offsetX;
+	d.panel.y = d3.event.offsetY;
+	d.panel.header.text('AudioNodeの挿入');
+
+	var table = d.panel.article.append('table');
 	var tbody = table.append('tbody').selectAll('tr').data(audioNodeCreators);
 	var tr = tbody.enter()
 	.append('tr')
@@ -492,15 +471,7 @@ function showAudioNodePanel(d){
 		node.y = d3.event.clientY;
 		draw();
 		d3.select('#prop-panel').style('visibility','hidden');
+		d.panel.dispose();
 	});
-
-	 d3.select('#prop-panel').style(
-		 {
-			 'visibility':'visible',
-		 	 'left': d3.event.clientX + 'px',
-			 'top':d3.event.clientY + 'px'
-		 });
-	 d3.event.returnValue = false;
-	 d3.event.preventDefault();
-	
+	d.panel.show();
 }

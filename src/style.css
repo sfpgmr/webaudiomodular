@@ -1,0 +1,181 @@
+   *{
+     font-family: "Hiragino Kaku Gothic ProN","メイリオ", sans-serif;
+   }
+   
+   body{
+     background:white;
+     color: black;
+   }
+   
+   .audioNode {
+	   fill:#BBB;
+     stroke-width:1px;
+	   stroke:black;
+	   color:black;
+     &:hover {
+  	   stroke:red;
+     }
+     &Drag {
+      cursor: move;
+      opacity:0.25;
+      fill:#BBB;
+      stroke-width:1px;
+      stroke:black;
+      color:black;
+     }
+   }
+  
+   .play{
+	   fill:#f99;
+   }
+
+   .param {
+     fill:red;
+     &:hover {
+       fill:orange
+     }
+   }
+  
+   .label {
+     stroke:black;
+     font-size:8px;
+     user-select: none;
+     -moz-user-select: none; /* Firefox */
+      -webkit-user-select: none; /* Safari、Chromeなど */
+      -ms-user-select: none; /* IE10かららしい */
+   }
+   
+   .input {
+     fill:red;
+     &:hover {
+       fill:orange;
+     }
+   }
+
+   .output{
+     fill:blue;
+     &:hover {
+       fill:lightblue;
+     }
+   }
+   
+   .line {
+     stroke: black;
+     stroke-width: 4px;
+     stroke-linecap: round;
+     fill:none;
+     &:hover{
+       stroke:red;
+     }
+     
+     &-drag {
+      opacity: 0.25;
+      stroke: black;
+      stroke-width: 4px;
+      stroke-linecap: round;
+      fill:none;
+      cursor:crosshair;
+     }
+   }
+   
+   .tip {
+     opacity:0.5;
+     font-size:10pt;
+     stroke:red;
+   }
+   
+   .content {
+     margin:0;
+     padding: 0;
+     position: relative;
+     z-index: 0;
+   }
+   
+    
+   /* Panel */
+  .panel {
+     opacity: 0.85;
+     position: absolute;
+     visibility: hidden;
+     display:block;
+     background:#eee;
+     color:black;
+     left:100px;
+     top:100px;
+     width:300px;
+     min-height:300px;
+     overflow-y:none;
+     overflow-x:none;
+     box-shadow: 8px 8px 8px rgba(0,0,0,0.4);
+     border-radius:4px 4px 4px 4px;
+     header {
+      text-align:center;
+      background:gray;
+      border-radius:4px 4px 0px 0px;
+     }
+
+     article {
+        table {
+          width:95%;
+          margin:auto;
+          overflow-y:auto;
+          overflow-x:none;
+          border-collapse: collapse;
+          td,th {
+            border-bottom:1px solid black;
+            font-size: 10px;
+          }
+          td {
+            user-select:none;
+            input[type="text"] {
+              border:none;
+              background: #333;
+              color:white;
+              width:90%;
+              height:85%;
+              padding:2px;
+              &[readonly="readonly"]{
+                background:none;
+                color:black;
+              }
+            }
+            &:hover {
+              background: lightcoral;
+              cursor: pointer;
+            }
+          }
+          th {
+            background:darkgray;  
+          }
+        }
+     }
+     &-dummy{
+      visibility: visible;
+      opacity: 0.5;
+      z-index: 0;
+     }
+     &-close {
+      background: #222;
+      display:block;
+      color:white;
+      position:absolute;
+      top:0px;
+      padding:0px 0px 0px 0px;
+      margin:0px 0px 0px 0px;
+      top:4px;
+      right:3px;
+      width:15px;
+      height:15px;
+      border-radius:4px;
+      text-align: center;
+      &:hover {
+        background: red;
+        color:white;
+        cursor:default;
+      }
+     }
+   }
+   
+   svg {
+     z-index: 10;
+   }

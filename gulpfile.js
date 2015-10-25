@@ -3,8 +3,10 @@
 
 var CSSNEXT_DIR = './src';
 var JS_SRC_DIR = './src';
-var CSS_RELEASE_DIR = './';
-var JS_RELEASE_DIR = './';
+var CSS_RELEASE_DIR = './dist';
+var JS_RELEASE_DIR = './dist';
+var HTML_SRC_DIR = './src';
+var HTML_RELEASE_DIR = './dist';
 
 var path = require('path');
 var gulp = require('gulp');
@@ -45,9 +47,22 @@ gulp.task('js',function(){
     .pipe(gulp.dest(JS_RELEASE_DIR));
 });
 
+//HTMLのビルド
+gulp.task('html',function(){
+  gulp.src('./src/*.html').pipe(gulp.dest('./dist'));
+});
+
+// gistディレクトリへのコピー
+gulp.task('gist',function(){
+  gulp.src('./dist/*.html').pipe(gulp.dest('./gist'));
+  gulp.src('./dist/*.css').pipe(gulp.dest('./gist'));
+  gulp.src('./dist/*.js').pipe(gulp.dest('./gist'));
+});
+
 // ウォッチ
-gulp.task('default',['js','postcss'],function(){
+gulp.task('default',['html','js','postcss'],function(){
     gulp.watch(CSSNEXT_DIR + '/**/*.css',['postcss']);
     gulp.watch(JS_SRC_DIR + '/**/*.js',['js']);
+    gulp.watch(HTML_SRC_DIR + '/**/*.html',['html']); 
 });
 }();
