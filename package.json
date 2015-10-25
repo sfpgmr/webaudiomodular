@@ -1,0 +1,42 @@
+{
+  "name": "webaudiomoduler",
+  "version": "1.0.0",
+  "description": "Web Audio APIのテストです。",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:sfpgmr/webaudiomoduler.git"
+  },
+  "author": "S.F.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gist.github.com/3a854cb6ab7951c7de5b"
+  },
+  "homepage": "https://gist.github.com/3a854cb6ab7951c7de5b",
+  "dependencies": {},
+  "devDependencies": {
+    "autoprefixer": "^6.0.0",
+    "babel": "^5.8.23",
+    "cssnano": "^2.6.1",
+    "cssnext": "^1.8.4",
+    "electron-packager": "^5.1.0",
+    "electron-prebuilt": "^0.33.7",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^5.2.1",
+    "gulp-filter": "^3.0.1",
+    "gulp-less": "^3.0.3",
+    "gulp-logger": "0.0.2",
+    "gulp-plumber": "^1.0.1",
+    "gulp-postcss": "^6.0.0",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-watch": "^4.3.5",
+    "postcss-import": "^7.0.0",
+    "postcss-mixins": "^1.0.0",
+    "postcss-nested": "^1.0.0",
+    "postcss-simple-vars": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"  
+  }
+}
