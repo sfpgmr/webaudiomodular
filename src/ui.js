@@ -24,9 +24,7 @@ class Panel {
 		.classed('panel-close',true)
 		.on('click',()=>{
 			this.dispose();
-		})
-		.append('span')
-		.text('x');
+		});
 
 	}	
 

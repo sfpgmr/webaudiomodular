@@ -470,8 +470,8 @@ function showAudioNodePanel(d){
 		node.x = d3.event.clientX;
 		node.y = d3.event.clientY;
 		draw();
-		d3.select('#prop-panel').style('visibility','hidden');
-		d.panel.dispose();
+		// d3.select('#prop-panel').style('visibility','hidden');
+		// d.panel.dispose();
 	});
 	d.panel.show();
 }

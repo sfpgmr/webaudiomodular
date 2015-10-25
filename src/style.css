@@ -112,6 +112,7 @@
       text-align:center;
       background:gray;
       border-radius:4px 4px 0px 0px;
+      cursor:move;
      }
 
      article {
@@ -153,26 +154,25 @@
       visibility: visible;
       opacity: 0.5;
       z-index: 0;
+      cursor:move;
+     }
+     &-close:before{
+       content:url('./close.png');
      }
      &-close {
-      background: #222;
+      background:none;
       display:block;
       color:white;
       position:absolute;
       top:0px;
       padding:0px 0px 0px 0px;
       margin:0px 0px 0px 0px;
-      top:4px;
+      top:3px;
       right:3px;
-      width:15px;
-      height:15px;
+      width:16px;
+      height:16px;
       border-radius:4px;
       text-align: center;
-      &:hover {
-        background: red;
-        color:white;
-        cursor:default;
-      }
      }
    }
    
