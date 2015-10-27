@@ -176,6 +176,12 @@
      }
    }
    
+   dialog#info {
+     position: absolute;
+     top:50%;
+     left:50%
+   }
+   
    svg {
      z-index: 10;
    }

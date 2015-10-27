@@ -1,4 +1,7 @@
-var svg;
+import * as audio from './audioNode_';
+import * as ui from './ui.js';
+
+export var svg;
 //aa
 var nodeGroup, lineGroup;
 var drag;
@@ -11,7 +14,7 @@ var line;
 var audioNodeCreators = [];
 
 // Drawの初期化
-function initUI(){
+export function initUI(){
 	// AudioNodeドラッグ用
 	drag = d3.behavior.drag()
 	.origin(function (d) { return d; })
@@ -97,7 +100,7 @@ function initUI(){
 				console.log('hit',node.name,d);
 				let from_ = {node:d.node,param:d.index};
 				let to_ = {node:node,param:elm.__data__.index};
-				AudioNode_.connect(from_,to_);
+				audio.AudioNode_.connect(from_,to_);
 				//AudioNode_.connect();
 				draw();
 				connected = true;
@@ -120,7 +123,7 @@ function initUI(){
 					bottom = node.y - node.height / 2 + bbox.y + bbox.height;
 				if(targetX >= left && targetX <= right && targetY >= top && targetY <= bottom)
 				{
-					AudioNode_.connect({node:d.node,param:d.index},{node:node,param:param});
+					audio.AudioNode_.connect({node:d.node,param:d.index},{node:node,param:param});
 					draw();
 					break;
 				}
@@ -153,25 +156,25 @@ function initUI(){
 	// body属性に挿入
 	audioNodeCreators = 
 	[
-		{name:'Gain',create:ctx.createGain.bind(ctx)},
-		{name:'Delay',create:ctx.createDelay.bind(ctx)},
-		{name:'AudioBufferSource',create:ctx.createBufferSource.bind(ctx)},
-		{name:'MediaElementAudioSource',create:ctx.createMediaElementSource.bind(ctx)},
-		{name:'Panner',create:ctx.createPanner.bind(ctx)},
-		{name:'Convolver',create:ctx.createConvolver.bind(ctx)},
-		{name:'Analyser',create:ctx.createAnalyser.bind(ctx)},
-		{name:'ChannelSplitter',create:ctx.createChannelSplitter.bind(ctx)},
-		{name:'ChannelMerger',create:ctx.createChannelMerger.bind(ctx)},
-		{name:'DynamicsCompressor',create:ctx.createDynamicsCompressor.bind(ctx)},
-		{name:'BiquadFilter',create:ctx.createBiquadFilter.bind(ctx)},
-		{name:'Oscillator',create:ctx.createOscillator.bind(ctx)},
-		{name:'MediaStreamAudioSource',create:ctx.createMediaStreamSource.bind(ctx)},
-		{name:'WaveShaper',create:ctx.createWaveShaper.bind(ctx)}
+		{name:'Gain',create:audio.ctx.createGain.bind(audio.ctx)},
+		{name:'Delay',create:audio.ctx.createDelay.bind(audio.ctx)},
+		{name:'AudioBufferSource',create:audio.ctx.createBufferSource.bind(audio.ctx)},
+		{name:'MediaElementAudioSource',create:audio.ctx.createMediaElementSource.bind(audio.ctx)},
+		{name:'Panner',create:audio.ctx.createPanner.bind(audio.ctx)},
+		{name:'Convolver',create:audio.ctx.createConvolver.bind(audio.ctx)},
+		{name:'Analyser',create:audio.ctx.createAnalyser.bind(audio.ctx)},
+		{name:'ChannelSplitter',create:audio.ctx.createChannelSplitter.bind(audio.ctx)},
+		{name:'ChannelMerger',create:audio.ctx.createChannelMerger.bind(audio.ctx)},
+		{name:'DynamicsCompressor',create:audio.ctx.createDynamicsCompressor.bind(audio.ctx)},
+		{name:'BiquadFilter',create:audio.ctx.createBiquadFilter.bind(audio.ctx)},
+		{name:'Oscillator',create:audio.ctx.createOscillator.bind(audio.ctx)},
+		{name:'MediaStreamAudioSource',create:audio.ctx.createMediaStreamSource.bind(audio.ctx)},
+		{name:'WaveShaper',create:audio.ctx.createWaveShaper.bind(audio.ctx)}
 	];
 	
-	if(ctx.createMediaStreamDestination){
+	if(audio.ctx.createMediaStreamDestination){
 		audioNodeCreators.push({name:'MediaStreamAudioDestination',
-			create:ctx.createMediaStreamDestination.bind(ctx)
+			create:audio.ctx.createMediaStreamDestination.bind(audio.ctx)
 		});
 	}
 	
@@ -183,10 +186,10 @@ function initUI(){
 }
 
 // 描画
-function draw() {
+export function draw() {
 	// AudioNodeの描画
 	var gd = nodeGroup.selectAll('g').
-	data(AudioNode_.audioNodes,function(d){return d.id;});
+	data(audio.AudioNode_.audioNodes,function(d){return d.id;});
 
 	// 矩形の更新
 	gd.select('rect')
@@ -203,26 +206,34 @@ function draw() {
 	.call(drag)
 	.attr({ 'width': (d)=> d.width, 'height': (d)=> d.height, 'class': 'audioNode' })
 	.classed('play',function(d){
-		return d.statusPlay === STATUS_PLAY_PLAYING;
+		return d.statusPlay === audio.STATUS_PLAY_PLAYING;
 	})
 	.on('contextmenu',function(d){
+		// パラメータ編集画面の表示
 		showPanel.bind(this,d)();
 		d3.event.preventDefault();
 		d3.event.returnValue = false;
 	})
 	.on('click.remove',function(d){
+		// ノードの削除
 		if(d3.event.shiftKey){
 			d.panel && d.panel.isShow && d.panel.dispose();
-			AudioNode_.remove(d);
-			draw();
+			try {
+				audio.AudioNode_.remove(d);
+				draw();
+			} catch(e) {
+//				dialog.text(e.message).node().show(window.innerWidth/2,window.innerHeight/2);
+			}
 		}
 		d3.event.returnValue = false;
 		d3.event.preventDefault();
 	})
 	.filter(function(d){
+		// 音源のみにフィルタ
 		return d.audioNode instanceof OscillatorNode || d.audioNode instanceof AudioBufferSourceNode || d.audioNode instanceof MediaElementAudioSourceNode; 
 	})
 	.on('click',function(d){
+		// 再生・停止
 		console.log(d3.event);
 		d3.event.returnValue = false;
 		d3.event.preventDefault();
@@ -231,13 +242,13 @@ function draw() {
 			return;
 		}
 		let sel = d3.select(this);
-		if(d.statusPlay === STATUS_PLAY_PLAYING){
-			d.statusPlay = STATUS_PLAY_PLAYED;
+		if(d.statusPlay === audio.STATUS_PLAY_PLAYING){
+			d.statusPlay = audio.STATUS_PLAY_PLAYED;
 			sel.classed('play',false);
 			d.stop(0);
-		} else if(d.statusPlay !== STATUS_PLAY_PLAYED){
+		} else if(d.statusPlay !== audio.STATUS_PLAY_PLAYED){
 			d.start(0);
-			d.statusPlay = STATUS_PLAY_PLAYING;
+			d.statusPlay = audio.STATUS_PLAY_PLAYING;
 			sel.classed('play',true);
 		} else {
 			alert('一度停止すると再生できません。');
@@ -291,7 +302,7 @@ function draw() {
 		seld.enter()
 		.append('g')
 		.append('rect')
-		.attr({ x: d.width - pointSize / 2, y: (d1)=> (d.outputStartY + d1.index * 20 - pointSize / 2), width: pointSize, height: pointSize, 'class': 'output' })
+		.attr({ x: d.width - ui.pointSize / 2, y: (d1)=> (d.outputStartY + d1.index * 20 - ui.pointSize / 2), width: ui.pointSize, height: ui.pointSize, 'class': 'output' })
 		.call(dragOut);
 		seld.exit().remove();
 	});
@@ -314,7 +325,7 @@ function draw() {
 		seld.enter()
 		.append('g')
 		.append('rect')
-		.attr({ x: - pointSize / 2, y: (d1)=> (d.inputStartY + d1.index * 20 - pointSize / 2), width: pointSize, height: pointSize, 'class': 'input' })
+		.attr({ x: - ui.pointSize / 2, y: (d1)=> (d.inputStartY + d1.index * 20 - ui.pointSize / 2), width: ui.pointSize, height: ui.pointSize, 'class': 'input' })
 		.on('mouseenter',function(d){
 			mouseOverNode = {node:d.audioNode_,param:d};
 		})
@@ -333,7 +344,7 @@ function draw() {
 		
 	// line 描画
 	var ld = lineGroup.selectAll('path')
-	.data(AudioNode_.audioConnections);
+	.data(audio.AudioNode_.audioConnections);
 
 	ld.enter()
 	.append('path');
@@ -354,7 +365,7 @@ function draw() {
 		y2 = d.to.node.y - d.to.node.height / 2;
 		
 		if(d.to.param){
-			if(d.to.param instanceof AudioParam_){
+			if(d.to.param instanceof audio.AudioParam_){
 				x2 += d.to.param.x;
 				y2 += d.to.param.y;
 			} else {
@@ -369,7 +380,7 @@ function draw() {
 		path.attr({'d':line(pos),'class':'line'});
 		path.on('click',function(d){
 			if(d3.event.shiftKey){
-				AudioNode_.disconnect(d.from,d.to);
+				audio.AudioNode_.disconnect(d.from,d.to);
 				d3.event.returnValue = false;
 				draw();
 			} 
@@ -415,7 +426,7 @@ function showPanel(d){
 
 	if(d.panel && d.panel.isShow) return ;
 
-	d.panel = new Panel();
+	d.panel = new ui.Panel();
 	d.panel.x = d.x;
 	d.panel.y = d.y;
 	d.panel.header.text(d.name);
@@ -430,7 +441,6 @@ function showPanel(d){
 	.append('input')
 	.attr({type:"text",value:(d)=>d.get(),readonly:(d)=>d.set?null:'readonly'})
 	.on('change',function(d){
-		let sel = d3.select(this);
 		let value = this.value;
 		let vn = parseFloat(value);
 		if(isNaN(vn)){
@@ -453,20 +463,20 @@ function showAudioNodePanel(d){
 			return;
 	}
 	
-	d.panel = new Panel();
+	d.panel = new ui.Panel();
 	d.panel.x = d3.event.offsetX;
 	d.panel.y = d3.event.offsetY;
 	d.panel.header.text('AudioNodeの挿入');
 
 	var table = d.panel.article.append('table');
 	var tbody = table.append('tbody').selectAll('tr').data(audioNodeCreators);
-	var tr = tbody.enter()
+	tbody.enter()
 	.append('tr')
 	.append('td')
 	.text((d)=>d.name)
 	.on('click',function(dt){
 		console.log(d3.event);
-		var node = AudioNode_.create(dt.create());
+		var node = audio.AudioNode_.create(dt.create());
 		node.x = d3.event.clientX;
 		node.y = d3.event.clientY;
 		draw();

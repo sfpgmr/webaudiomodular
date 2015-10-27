@@ -1,8 +1,10 @@
 "use strict";
-var ctx;
+
+import * as audio from './audioNode_';
+import {initUI,draw,svg } from './draw';
+
 window.onload = () => {
-	ctx = new AudioContext();
-	
+	audio.ctx = new AudioContext();
 	d3.select(window)
 	.on('resize',function(){
 		if(svg){
@@ -13,9 +15,10 @@ window.onload = () => {
 		}
 	});
 
-	var out = AudioNode_.create(ctx.destination);
-	out.x = 750;
-	out.y = 300;
+	var out = audio.AudioNode_.create(audio.ctx.destination);
+	out.x = window.innerWidth / 2;
+	out.y = window.innerHeight / 2;
+	out.removable = false;
 	initUI();
 	draw();
 };

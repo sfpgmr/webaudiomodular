@@ -18,7 +18,11 @@ var atImport = require('postcss-import');
 var source = require('vinyl-source-stream');
 var babel = require('gulp-babel');
 var plumber = require('gulp-plumber');
-var sourcemaps = require('gulp-sourcemaps')
+var sourcemaps = require('gulp-sourcemaps');
+var browserify = require('browserify');
+var babelify = require('babelify');
+var uglifyify = require('uglifyify');
+
 
 // CSSのビルド
 gulp.task('postcss', function() {
@@ -39,12 +43,20 @@ gulp.task('postcss', function() {
 	
 // JSのビルド
 gulp.task('js',function(){
-    gulp.src(path.join(JS_SRC_DIR, '/**/*.js'))
-    .pipe(sourcemaps.init())
-    .pipe(plumber())
-    .pipe(babel())
-    .pipe(sourcemaps.write())
-    .pipe(gulp.dest(JS_RELEASE_DIR));
+    browserify('./src/script.js',{debug:true})
+    .transform(babelify)
+    .transform({global:true},uglifyify)
+    .bundle()
+    .on("error", function (err) { console.log("Error : " + err.message); })
+    .pipe(source('bundle.js'))
+    .pipe(gulp.dest('./dist'));
+    
+    // gulp.src(path.join(JS_SRC_DIR, 'script.js'))
+    // .pipe(sourcemaps.init())
+    // .pipe(plumber())
+    // .pipe(babel())
+    // .pipe(sourcemaps.write())
+    // .pipe(gulp.dest(JS_RELEASE_DIR));
 });
 
 //HTMLのビルド

@@ -1,6 +1,9 @@
+import * as ui from './ui';
+
 var counter = 0;
-class NodeViewData {
-	constructor(x = 0, y = 0,width = nodeWidth,height = nodeHeight) {
+export var ctx; 
+export class NodeViewData {
+	constructor(x = 0, y = 0,width = ui.nodeWidth,height = ui.nodeHeight) {
 		this.x = x ;
 		this.y = y ;
 		this.width = width ;
@@ -8,13 +11,13 @@ class NodeViewData {
 	}
 }
 
-const STATUS_PLAY_NOT_PLAYED = 0;
-const STATUS_PLAY_PLAYING = 1;
-const STATUS_PLAY_PLAYED = 2;
+export const STATUS_PLAY_NOT_PLAYED = 0;
+export const STATUS_PLAY_PLAYING = 1;
+export const STATUS_PLAY_PLAYED = 2;
 
-class AudioParam_ extends NodeViewData {
+export class AudioParam_ extends NodeViewData {
 	constructor(audioNode_,name, param) {
-		super(0,0,pointSize,pointSize);
+		super(0,0,ui.pointSize,ui.pointSize);
 		this.id = counter++;
 		this.name = name;
 		this.audioParam = param;
@@ -22,7 +25,7 @@ class AudioParam_ extends NodeViewData {
 	}
 }
 
-class AudioNode_ extends NodeViewData {
+export class AudioNode_ extends NodeViewData {
 	constructor(audioNode) {
 		super();
 		this.id = counter++;
@@ -31,6 +34,7 @@ class AudioNode_ extends NodeViewData {
 		this.audioParams = [];
 		this.params = [];
 		let cy = 1;
+		this.removable = true;
 		for (var i in audioNode) {
 			if (typeof audioNode[i] === 'function') {
 				this[i] = audioNode[i].bind(audioNode);
@@ -92,6 +96,10 @@ class AudioNode_ extends NodeViewData {
 	
 	// 1つだけだとノードの削除で2つの場合はコネクションの削除
 	static remove(node) {
+			if(!this.removable)
+			{
+				throw new Error('削除できないノードです。');
+			}
 			// ノードの削除
 			for (var i = 0; i < AudioNode_.audioNodes.length; ++i) {
 				if (AudioNode_.audioNodes[i] === node) {
@@ -319,4 +327,5 @@ class AudioNode_ extends NodeViewData {
 
 AudioNode_.audioNodes = [];
 AudioNode_.audioConnections = [];
+
 

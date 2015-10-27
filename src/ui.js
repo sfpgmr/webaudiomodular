@@ -1,7 +1,11 @@
 "use strict";
+import UUID from './uuid.core';
+export const nodeHeight = 50;
+export const nodeWidth = 100;
+export const pointSize = 16;
 
 // panel window
-class Panel {
+export class Panel {
 	constructor(sel,prop){
 		if(!prop || !prop.id){
 			prop = prop ? (prop.id = 'id-' + UUID.generate(),prop) :{ id:'id-' + UUID.generate()};
@@ -104,3 +108,4 @@ Panel.prototype.drag = d3.behavior.drag()
 		);
 		dummy.remove();
 	});
+	
