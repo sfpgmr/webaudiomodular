@@ -45,18 +45,21 @@ gulp.task('postcss', function() {
 gulp.task('js',function(){
     browserify('./src/script.js',{debug:true})
     .transform(babelify)
-    .transform({global:true},uglifyify)
+//    .transform({global:true},uglifyify)
     .bundle()
     .on("error", function (err) { console.log("Error : " + err.message); })
     .pipe(source('bundle.js'))
     .pipe(gulp.dest('./dist'));
-    
-    // gulp.src(path.join(JS_SRC_DIR, 'script.js'))
-    // .pipe(sourcemaps.init())
-    // .pipe(plumber())
-    // .pipe(babel())
-    // .pipe(sourcemaps.write())
-    // .pipe(gulp.dest(JS_RELEASE_DIR));
+});
+
+// JSのビルド
+gulp.task('test',function(){
+    browserify('./test/audioNodeTest.js',{debug:true})
+    .transform(babelify)
+    .bundle()
+    .on("error", function (err) { console.log("Error : " + err.message); })
+    .pipe(source('test.js'))
+    .pipe(gulp.dest('./dist/test'));
 });
 
 //HTMLのビルド
@@ -72,9 +75,10 @@ gulp.task('gist',function(){
 });
 
 // ウォッチ
-gulp.task('default',['html','js','postcss'],function(){
+gulp.task('default',['html','js','postcss','test'],function(){
     gulp.watch(CSSNEXT_DIR + '/**/*.css',['postcss']);
-    gulp.watch(JS_SRC_DIR + '/**/*.js',['js']);
+    gulp.watch(JS_SRC_DIR + '/**/*.js',['js','test']);
     gulp.watch(HTML_SRC_DIR + '/**/*.html',['html']); 
+    gulp.watch('./test/**/*.js',['test']); 
 });
 }();

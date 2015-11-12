@@ -29,10 +29,17 @@
 	   fill:#f99;
    }
 
-   .param {
+   .audio-param {
      fill:red;
      &:hover {
        fill:orange
+     }
+   }
+   
+   .param {
+     fill:green;
+     &:hover{
+       fill:#2f2;
      }
    }
   

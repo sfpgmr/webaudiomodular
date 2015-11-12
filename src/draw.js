@@ -1,4 +1,4 @@
-import * as audio from './audioNode_';
+import * as audio from './audio';
 import * as ui from './ui.js';
 
 export var svg;
@@ -6,6 +6,7 @@ export var svg;
 var nodeGroup, lineGroup;
 var drag;
 var dragOut;
+var dragParam;
 var dragPanel;
 
 var mouseClickNode;
@@ -61,14 +62,23 @@ export function initUI(){
 	dragOut = d3.behavior.drag()
 	.origin(function (d) { return d; })
 	.on('dragstart',function(d){
-		var x1 = d.node.x + d.node.width / 2,y1;
+		let x1,y1;
 		if(d.index){
-			y1 = d.node.y - d.node.height /2 + d.node.outputStartY + d.index * 20; 
+			if(d.index instanceof audio.ParamView){
+				x1 = d.node.x - d.node.width / 2 + d.index.x;
+				y1 = d.node.y - d.node.height /2 + d.index.y;
+			} else {
+				x1 = d.node.x + d.node.width / 2;
+				y1 = d.node.y - d.node.height /2 + d.node.outputStartY + d.index * 20; 
+			}
 		} else {
+			x1 = d.node.x + d.node.width / 2;
 			y1 = d.node.y - d.node.height /2 + d.node.outputStartY;
 		}
+
 		d.x1 = x1,d.y1 = y1;				
 		d.x2 = x1,d.y2 = y1;
+
 		var pos = makePos(x1,y1,d.x2,d.y2);
 		d.line = svg.append('g')
 		.datum(d)
@@ -97,11 +107,11 @@ export function initUI(){
 				bottom = node.y - node.height / 2 + bbox.y + bbox.height;
 			if(targetX >= left && targetX <= right && targetY >= top && targetY <= bottom)
 			{
-				console.log('hit',node.name,d);
+				console.log('hit',elm);
 				let from_ = {node:d.node,param:d.index};
 				let to_ = {node:node,param:elm.__data__.index};
-				audio.AudioNode_.connect(from_,to_);
-				//AudioNode_.connect();
+				audio.AudioNodeView.connect(from_,to_);
+				//AudioNodeView.connect();
 				draw();
 				connected = true;
 				break;
@@ -110,20 +120,21 @@ export function initUI(){
 		
 		if(!connected){
 			// AudioParam
-			var params = d3.selectAll('.param')[0];
+			var params = d3.selectAll('.param,.audio-param')[0];
 			for(var i = 0,l = params.length;i < l;++i)
 			{
 				let elm = params[i];
 				let bbox = elm.getBBox();
 				let param = elm.__data__;
-				let node = param.audioNode_;
-				let left = node.x - node.width / 2 + bbox.x,
-					top = node.y - node.height / 2 + bbox.y,
-					right = node.x - node.width / 2 + bbox.x + bbox.width,
-					bottom = node.y - node.height / 2 + bbox.y + bbox.height;
-				if(targetX >= left && targetX <= right && targetY >= top && targetY <= bottom)
+				let node = param.node;
+				let left = node.x - node.width / 2 + bbox.x;
+				let	top_ = node.y - node.height / 2 + bbox.y;
+				let	right = node.x - node.width / 2 + bbox.x + bbox.width;
+				let	bottom = node.y - node.height / 2 + bbox.y + bbox.height;
+				if(targetX >= left && targetX <= right && targetY >= top_ && targetY <= bottom)
 				{
-					audio.AudioNode_.connect({node:d.node,param:d.index},{node:node,param:param});
+					console.log('hit',elm);
+					audio.AudioNodeView.connect({node:d.node,param:d.index},{node:node,param:param.index});
 					draw();
 					break;
 				}
@@ -169,7 +180,9 @@ export function initUI(){
 		{name:'BiquadFilter',create:audio.ctx.createBiquadFilter.bind(audio.ctx)},
 		{name:'Oscillator',create:audio.ctx.createOscillator.bind(audio.ctx)},
 		{name:'MediaStreamAudioSource',create:audio.ctx.createMediaStreamSource.bind(audio.ctx)},
-		{name:'WaveShaper',create:audio.ctx.createWaveShaper.bind(audio.ctx)}
+		{name:'WaveShaper',create:audio.ctx.createWaveShaper.bind(audio.ctx)},
+		{name:'EG',create:()=>new audio.EG()},
+		{name:'Sequencer',create:()=>new audio.Sequencer()}
 	];
 	
 	if(audio.ctx.createMediaStreamDestination){
@@ -189,7 +202,7 @@ export function initUI(){
 export function draw() {
 	// AudioNodeの描画
 	var gd = nodeGroup.selectAll('g').
-	data(audio.AudioNode_.audioNodes,function(d){return d.id;});
+	data(audio.AudioNodeView.audioNodes,function(d){return d.id;});
 
 	// 矩形の更新
 	gd.select('rect')
@@ -219,7 +232,7 @@ export function draw() {
 		if(d3.event.shiftKey){
 			d.panel && d.panel.isShow && d.panel.dispose();
 			try {
-				audio.AudioNode_.remove(d);
+				audio.AudioNodeView.remove(d);
 				draw();
 			} catch(e) {
 //				dialog.text(e.message).node().show(window.innerWidth/2,window.innerHeight/2);
@@ -262,23 +275,61 @@ export function draw() {
 	.attr({ x: 0, y: -10, 'class': 'label' })
 	.text(function (d) { return d.name; });
 
-	// AudioParamの表示	
+	// 入力AudioParamの表示	
 	gd.each(function (d) {
 		var sel = d3.select(this);
 		var gp = sel.append('g');
 		var gpd = gp.selectAll('g')
-		.data(d.audioParams,function(d){return d.id;});
-		
+		.data(d.inputParams.map((d)=>{
+			return {node:d.AudioNodeView,index:d};
+		}),function(d){return d.index.id;});		
+
 		var gpdg = gpd.enter()
 		.append('g');
 		
 		gpdg.append('circle')
-		.attr({ 'r': (d)=>d.width/2, cx: 0, cy: (d, i)=> { /*d.x = 0; d.y = (i + 1) * 20; */return d.y; }, 'class': 'param' });
+		.attr({'r': (d)=>d.index.width/2, 
+		cx: 0, cy: (d, i)=> { return d.index.y; },
+		'class': function(d) {
+			if(d.index instanceof audio.AudioParamView){
+				return 'audio-param';
+			}
+			return 'param';
+		}});
 		
 		gpdg.append('text')
-		.attr({x: (d)=> (d.x + d.width / 2 + 5),y:(d)=>d.y,'class':'label' })
-		.text((d)=>d.name);
+		.attr({x: (d)=> (d.index.x + d.index.width / 2 + 5),y:(d)=>d.index.y,'class':'label' })
+		.text((d)=>d.index.name);
+
+		gpd.exit().remove();
 		
+	});
+
+	// 出力Paramの表示	
+	gd.each(function (d) {
+		var sel = d3.select(this);
+		var gp = sel.append('g');
+		
+		
+		
+		var gpd = gp.selectAll('g')
+		.data(d.outputParams.map((d)=>{
+			return {node:d.AudioNodeView,index:d};
+		}),function(d){return d.index.id;});
+		
+		var gpdg = gpd.enter()
+		.append('g');
+
+		gpdg.append('circle')
+		.attr({'r': (d)=>d.index.width/2, 
+		cx: d.width, cy: (d, i)=> { return d.index.y; },
+		'class': 'param'})
+		.call(dragOut);
+		
+		gpdg.append('text')
+		.attr({x: (d)=> (d.index.x + d.index.width / 2 + 5),y:(d)=>d.index.y,'class':'label' })
+		.text((d)=>d.index.name);
+
 		gpd.exit().remove();
 		
 	});
@@ -344,7 +395,7 @@ export function draw() {
 		
 	// line 描画
 	var ld = lineGroup.selectAll('path')
-	.data(audio.AudioNode_.audioConnections);
+	.data(audio.AudioNodeView.audioConnections);
 
 	ld.enter()
 	.append('path');
@@ -354,10 +405,16 @@ export function draw() {
 		var x1,y1,x2,y2;
 
 		// x1,y1
-		x1 = d.from.node.x + d.from.node.width / 2;
 		if(d.from.param){
-			y1 = d.from.node.y - d.from.node.height /2 + d.from.node.outputStartY + d.from.param * 20; 
+			if(d.from.param instanceof audio.ParamView){
+				x1 = d.from.node.x - d.from.node.width / 2 + d.from.param.x;
+				y1 = d.from.node.y - d.from.node.height /2 + d.from.param.y; 
+			} else {
+				x1 = d.from.node.x + d.from.node.width / 2;
+				y1 = d.from.node.y - d.from.node.height /2 + d.from.node.outputStartY + d.from.param * 20; 
+			}
 		} else {
+			x1 = d.from.node.x + d.from.node.width / 2;
 			y1 = d.from.node.y - d.from.node.height /2 + d.from.node.outputStartY;
 		}
 
@@ -365,7 +422,7 @@ export function draw() {
 		y2 = d.to.node.y - d.to.node.height / 2;
 		
 		if(d.to.param){
-			if(d.to.param instanceof audio.AudioParam_){
+			if(d.to.param instanceof audio.AudioParamView || d.to.param instanceof audio.ParamView){
 				x2 += d.to.param.x;
 				y2 += d.to.param.y;
 			} else {
@@ -380,7 +437,7 @@ export function draw() {
 		path.attr({'d':line(pos),'class':'line'});
 		path.on('click',function(d){
 			if(d3.event.shiftKey){
-				audio.AudioNode_.disconnect(d.from,d.to);
+				audio.AudioNodeView.disconnect(d.from,d.to);
 				d3.event.returnValue = false;
 				draw();
 			} 
@@ -476,7 +533,7 @@ function showAudioNodePanel(d){
 	.text((d)=>d.name)
 	.on('click',function(dt){
 		console.log(d3.event);
-		var node = audio.AudioNode_.create(dt.create());
+		var node = audio.AudioNodeView.create(dt.create());
 		node.x = d3.event.clientX;
 		node.y = d3.event.clientY;
 		draw();

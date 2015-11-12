@@ -1,6 +1,6 @@
 "use strict";
 
-import * as audio from './audioNode_';
+import * as audio from './audio';
 import {initUI,draw,svg } from './draw';
 
 window.onload = () => {
@@ -15,7 +15,7 @@ window.onload = () => {
 		}
 	});
 
-	var out = audio.AudioNode_.create(audio.ctx.destination);
+	var out = audio.AudioNodeView.create(audio.ctx.destination);
 	out.x = window.innerWidth / 2;
 	out.y = window.innerHeight / 2;
 	out.removable = false;
