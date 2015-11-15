@@ -89,7 +89,9 @@ Panel.prototype.drag = d3.behavior.drag()
 			'class':'panel panel-dummy'})
 		.style({
 			left:sel.style('left'),
-			top:sel.style('top')
+			top:sel.style('top'),
+			width:sel.style('width'),
+			height:sel.style('height')
 		});
 	})
 	.on("drag", function (d) {

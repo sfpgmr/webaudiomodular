@@ -215,10 +215,10 @@ export class Sequencer {
 						break;
 					} else {
 						var event = track.events[track.pointer++];
-						track.step += event.step;
 						var playTime = track.step * this.stepTime_ + this.startTime_;
 						event.process(playTime,track);
-					console.log(track.pointer,track.events.length,track.events[track.pointer],track.step,currentStep,this.currentTime_,playTime);
+						track.step += event.step;
+//					console.log(track.pointer,track.events.length,track.events[track.pointer],track.step,currentStep,this.currentTime_,playTime);
 					}
 				}
 			} else {

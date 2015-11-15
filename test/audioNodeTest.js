@@ -180,7 +180,7 @@ describe('AudioNodeTest', () => {
 		
 		// シーケンスデータの挿入
 		seq.audioNode.bpm = 120;
-		seq.audioNode.tracks[0].events.push(new audio.NoteEvent(0,47,6));
+		seq.audioNode.tracks[0].events.push(new audio.NoteEvent(48,47,6));
 		for(var i = 48;i< 110;++i){
 			seq.audioNode.tracks[0].events.push(new audio.NoteEvent(48,i,6));
 		}
