@@ -1,9 +1,9 @@
-import * as audio from './audioNodeView';
+import * as audio from './audio';
 "use strict";
 
 export class EventBase {
 	constructor(step){
-		this.step = 0; 
+		this.step = step; 
 	}
 }
 
@@ -53,39 +53,54 @@ export class NoteEvent extends EventBase {
 	}
 	
 	process(time,track){
-			for(let j = 0,je = track.pithces.length;j < je;++j){
-				track.pitches[j].process(this.com,this.pitch,time);
-			}
-			for(let j = 0,je = track.velocities.length;j < je;++j){
-				track.velocities[j].process(this.com,this.vel,time);
+			if(this.note){
+				for(let j = 0,je = track.pitches.length;j < je;++j){
+					track.pitches[j].process(this.command,this.pitch,time);
+				}
+				
+				for(let j = 0,je = track.velocities.length;j < je;++j){
+					// keyon
+					track.velocities[j].process(this.command,this.vel,time);
+					// keyoff
+					track.velocities[j].process(this.command,0,time + this.gate * track.sequencer.stepTime_ );
+				}
 			}
 	}
 }
 
 export class Track {
-	constructor(){
+	constructor(sequencer){
 		this.events = [];
 		this.pointer = 0;
 		this.step = 0;
 		this.end = false;
 		this.pitches = [];
 		this.velocities = [];
+		this.sequencer = sequencer;
 	}
 }
 
+export const SEQ_STATUS = {
+	STOPPED:0,
+	PLAYING:1,
+	PAUSED:2
+} ;
+
+export const NUM_OF_TRACKS = 4;
+
 export class Sequencer {
 	constructor(){
-		this.bpm = 120.0; // tempo
-		this.tpb = 48.0; // 四分音符の解像度
+		this.bpm_ = 120.0; // tempo
+		this.tpb_ = 96.0; // 四分音符の解像度
 		this.beat = 4;
 		this.bar = 4; // 
 		this.tracks = [];
 		this.numberOfInputs = 0;
 		this.numberOfOutputs = 0;
 		this.name = 'Sequencer';
-		for (var i = 0;i < 16;++i)
+		for (var i = 0;i < NUM_OF_TRACKS;++i)
 		{
-			this.tracks.push(new Track());
+			this.tracks.push(new Track(this));
 			this['trk' + i + 'g'] = new audio.ParamView(null,'trk' + i + 'g',true);
 			this['trk' + i + 'g'].track = this.tracks[i];
 			this['trk' + i + 'g'].type = 'gate';
@@ -98,7 +113,46 @@ export class Sequencer {
 		this.currentTime_ = 0;
 		this.calcStepTime();
 		this.repeat = false;
-		Sequencer.sequencers.push(this); 
+		this.status_ = SEQ_STATUS.STOPPED;
+		Sequencer.sequencers.push(this);
+		if(Sequencer.added){
+			Sequencer.added();
+		}
+	}
+	
+	get tpb(){
+		return this.tpb_;
+	}
+	
+	set tpb(v){
+		this.tpb_ = v;
+		this.calcStepTime();
+	}
+	
+	get bpm(){
+		return this.bpm_;
+	}
+	
+	set bpm(v){
+		this.bpm_ = v;
+		this.calcStepTime();
+	}
+	
+	dispose(){
+		for(var i = 0;i < Sequencer.sequencers.length;++i)
+		{
+			if(this === Sequencer.sequencers[i]){
+				 Sequencer.sequencers.splice(i,1);
+				 break;
+			}
+		}
+		
+		if(Sequencer.sequencers.length == 0)
+		{
+			if(Sequencer.empty){
+				Sequencer.empty();
+			}
+		}
 	}
 	
 	calcStepTime(){
@@ -106,22 +160,41 @@ export class Sequencer {
 	}
 	
 	start(time){
-		this.currentTime_ = time || audio.ctx.currentTime();
+		if(this.status_ == SEQ_STATUS.STOPPED || this.status_ == SEQ_STATUS.PAUSED ){
+			this.currentTime_ = time || audio.ctx.currentTime();
+			this.startTime_  = this.currentTime_;
+			this.status_ = SEQ_STATUS.PLAYING;
+		}
 	}
 	
 	stop(){
-		
+		if(this.status_ == SEQ_STATUS.PLAYING || this.status_ == SEQ_STATUS.PAUSED)
+		{
+			this.tracks.forEach((d)=>{
+				d.pitches.forEach((p)=>{
+					p.stop();
+				});
+				d.velocities.forEach((v)=>{
+					v.stop();
+				});
+			});
+			
+			this.status_ = SEQ_STATUS.STOPPED;
+			this.reset();
+		}
 	}
 
 	pause(){
-		
+		if(this.status_ == SEQ_STATUS.PLAYING){
+			this.status_ = SEQ_STATUS.PAUSED;
+		}
 	}
 	
 	reset(){
 		this.startTime_ = 0;
 		this.currentTime_ = 0;
 		this.tracks.forEach((track)=>{
-			track.end = false;
+			track.end = !track.events.length;
 			track.step = 0;
 			track.pointer = 0;
 		});
@@ -132,19 +205,28 @@ export class Sequencer {
 	{
 		this.currentTime_ = time || audio.ctx.currentTime();
 		var currentStep = (this.currentTime_  - this.startTime_ + 0.1) / this.stepTime_;
+		let endcount = 0;
 		for(var i = 0,l = this.tracks.length;i < l;++i){
 			var track = this.tracks[i];
-			while(track.step <= currentStep && !track.end ){
-				if(track.pointer > track.events.length ){
-					track.end = true;
-					break;
-				} else {
-					var event = track.events[track.pointer++];
-					track.step += event.step;
-					var playTime = track.step * this.stepTime_ + this.currentTime_;
-					event.process(playTime,track);
+			if(!track.end){
+				while(track.step <= currentStep && !track.end ){
+					if(track.pointer >= track.events.length ){
+						track.end = true;
+						break;
+					} else {
+						var event = track.events[track.pointer++];
+						track.step += event.step;
+						var playTime = track.step * this.stepTime_ + this.startTime_;
+						event.process(playTime,track);
+					console.log(track.pointer,track.events.length,track.events[track.pointer],track.step,currentStep,this.currentTime_,playTime);
+					}
 				}
+			} else {
+				++endcount;
 			}
+		}
+		if(endcount == this.tracks.length){
+			this.stop();
 		}
 	}
 	
@@ -160,7 +242,7 @@ export class Sequencer {
 	
 	// 削除
 	disconnect(c){
-		var track = track.c.from.param.track;
+		var track = c.from.param.track;
 		for(var i = 0;i < track.pitches.length;++i){
 			if(c.to.node === track.pitches[i].to.node && c.to.param === track.pitches[i].to.param){
 				track.pitches.splice(i--,1);
@@ -175,13 +257,16 @@ export class Sequencer {
 			}
 		}
 	}
-	
+
 	static makeProcess(c){
 		if(c.to.param instanceof audio.ParamView){
 			return  {
 				to:c.to,
 				process: (com,v,t)=>{
-					c.to.node.process(c.to,com,v,t);
+					c.to.node.audioNode.process(c.to,com,v,t);
+				},
+				stop:function(){
+					c.to.node.audioNode.stop(c.to);
 				}
 			};
 		} 
@@ -197,10 +282,68 @@ export class Sequencer {
 		}
 		return {
 			to:c.to,
-			process:process
+			process:process,
+			stop:function(){
+				c.to.param.audioParam.cancelScheduledValues(0);
+			}
 		};
+	}
+
+	static exec()
+	{
+		if(Sequencer.sequencers.status == SEQ_STATUS.PLAYING){
+			window.requestAnimationFrame(Sequencer.exec);
+			let endcount = 0;
+			for(var i = 0,e = Sequencer.sequencers.length;i < e;++i){
+				var seq = Sequencer.sequencers[i];
+				if(seq.status_ == SEQ_STATUS.PLAYING){
+					seq.process(audio.ctx.currentTime);
+				} else if(seq.status_ == SEQ_STATUS.STOPPED){
+					++endcount;
+				}
+			}
+			if(endcount == Sequencer.sequencers.length)
+			{
+				Sequencer.stopSequences();
+				if(Sequencer.stopped){
+					Sequencer.stopped();
+				}
+			}
+		}
+	}
+	
+	// シーケンス全体のスタート
+	static startSequences(time){
+		if(Sequencer.sequencers.status == SEQ_STATUS.STOPPED || Sequencer.sequencers.status == SEQ_STATUS.PAUSED )
+		{
+			Sequencer.sequencers.forEach((d)=>{
+				d.start(time);
+			});
+			Sequencer.sequencers.status = SEQ_STATUS.PLAYING;
+			Sequencer.exec();
+		}
+	}
+	// シーケンス全体の停止
+	static stopSequences(){
+		if(Sequencer.sequencers.status == SEQ_STATUS.PLAYING || Sequencer.sequencers.status == SEQ_STATUS.PAUSED ){
+			Sequencer.sequencers.forEach((d)=>{
+				d.stop();
+			});
+			Sequencer.sequencers.status = SEQ_STATUS.STOPPED;
+		}
+	}
+
+	// シーケンス全体のポーズ	
+	static pauseSequences(){
+		if(Sequencer.sequencers.status == SEQ_STATUS.PLAYING){
+			Sequencer.sequencers.forEach((d)=>{
+				d.pause();
+			});
+			Sequencer.sequencers.status = SEQ_STATUS.PAUSED;
+		}
 	}
 }
 
 Sequencer.sequencers = [];
+Sequencer.sequencers.status = SEQ_STATUS.STOPPED; 
 

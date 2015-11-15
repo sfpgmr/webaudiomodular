@@ -4,32 +4,68 @@ import * as audio from './audioNodeView';
 export class EG {
 	constructor(){
 		this.gate = new audio.ParamView(this,'gate',false);
-		this.gate.connect_ = (function(param){
-			if(param.param instanceof audio.ParamView){
-				this.exec = (p)=>{
-					this.param.push(param);
-				}
-			} else if(param.param instanceof audio.AudioNodeView){
-				
-			}
-		}).bind(this.gate);
 		this.output = new audio.ParamView(this,'output',true);
 		this.numberOfInputs = 0;
 		this.numberOfOutputs = 0;
-		this.attack = 0.5;
-		this.decay = 0.5;
-		this.release = 0.5;
-		this.sustain = 0.5;
+		this.attack = 0.001;
+		this.decay = 0.05;
+		this.release = 0.05;
+		this.sustain = 0.2;
 		this.gain = 1.0;
 		this.name = 'EG';
 		audio.defIsNotAPIObj(this,false);
+		this.outputs = [];
 	}
 	
-	connect(to){
-		console.log('connect');
+	connect(c)
+	{
+		if(! (c.to.param instanceof audio.AudioParamView)){
+			throw new Error('AudioParam以外とは接続できません。');
+		}
+		c.to.param.audioParam.value = 0;
+		this.outputs.push(c.to);
 	}
 	
-	disconnect(to){
+	disconnect(c){
+		for(var i = 0;i < this.outputs.length;++i){
+			if(c.to.node === this.outputs[i].node && c.to.param === this.outputs[i].param)
+			{
+				this.outputs.splice(i--,1);
+				break;
+			}
+		}
+	}
+	
+	process(to,com,v,t)
+	{
+		if(v > 0) {
+			// keyon
+			// ADSまでもっていく
+			this.outputs.forEach((d)=>{
+				console.log('keyon',com,v,t);
+				d.param.audioParam.setValueAtTime(0,t);
+				d.param.audioParam.linearRampToValueAtTime(v * this.gain ,t + this.attack);
+				d.param.audioParam.linearRampToValueAtTime(this.sustain * v * this.gain ,t + this.attack + this.decay );
+			});
+		} else {
+			// keyoff
+			// リリース
+			this.outputs.forEach((d)=>{
+				console.log('keyoff',com,v,t);
+				d.param.audioParam.linearRampToValueAtTime(0,t + this.release);
+			});
+		}
+	}
+	
+	stop(){
+		this.outputs.forEach((d)=>{
+			console.log('stop');
+			d.param.audioParam.cancelScheduledValues(0);
+			d.param.audioParam.setValueAtTime(0,0);
+		});
+	}
+	
+	pause(){
 		
 	}
 	

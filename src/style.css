@@ -192,3 +192,43 @@
    svg {
      z-index: 10;
    }
+   
+   .player {
+     padding:10px;
+     border-radius: 5px;
+     position: fixed;
+     background:#444;
+     opacity: 0.8;
+     
+     button {
+       opacity: 0.5;
+       width:30px;
+       height:30px;
+       font-size: 15px;
+       border:none;
+       opacity: 1.0;
+       background: white;
+       color:red;
+       
+       &:disabled{
+          opacity: 0.25;
+       }
+
+       &.play{
+         transform-origin: center;
+         transform:rotate(-90deg);
+       }
+       &.pause {
+         font-weight: 900;
+         transform-origin: center;
+         transform:rotate(-90deg);
+       }
+       
+       &:enabled:hover {
+         cursor: pointer;
+          background:skyblue;  
+       }
+     }
+ 
+   }
+   

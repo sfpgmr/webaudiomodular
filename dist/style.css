@@ -199,3 +199,48 @@
    svg {
      z-index: 10;
    }
+   
+   .player {
+     padding:10px;
+     border-radius: 5px;
+     position: fixed;
+     background:#444;
+     opacity: 0.8;
+ 
+   }
+   
+   .player button {
+     opacity: 0.5;
+     width:30px;
+     height:30px;
+     font-size: 15px;
+     border:none;
+     opacity: 1.0;
+     background: white;
+     color:red;
+}
+   
+   .player button:disabled{
+     opacity: 0.25;
+}
+   
+   .player button.play{
+     -webkit-transform-origin: center;
+             transform-origin: center;
+     -webkit-transform:rotate(-90deg);
+             transform:rotate(-90deg);
+}
+   
+   .player button.pause {
+     font-weight: 900;
+     -webkit-transform-origin: center;
+             transform-origin: center;
+     -webkit-transform:rotate(-90deg);
+             transform:rotate(-90deg);
+}
+   
+   .player button:enabled:hover {
+     cursor: pointer;
+     background:skyblue;
+}
+   

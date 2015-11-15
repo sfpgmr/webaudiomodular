@@ -1,5 +1,6 @@
 import * as audio from './audio';
 import * as ui from './ui.js';
+import {showSequenceEditor} from './sequenceEditor';
 
 export var svg;
 //aa
@@ -16,6 +17,59 @@ var audioNodeCreators = [];
 
 // Drawの初期化
 export function initUI(){
+	// 出力ノードの作成（削除不可）
+	var out = audio.AudioNodeView.create(audio.ctx.destination,showPanel);
+	out.x = window.innerWidth / 2;
+	out.y = window.innerHeight / 2;
+	out.removable = false;
+	
+	// プレイヤー
+	audio.Sequencer.added = ()=>
+	{
+		if(audio.Sequencer.sequencers.length == 1 && audio.Sequencer.sequencers.status === audio.SEQ_STATUS.STOPPED){
+			d3.select('#play').attr('disabled',null);
+			d3.select('#stop').attr('disabled','disabled');
+			d3.select('#pause').attr('disabled','disabled');
+		}
+	}
+	
+	audio.Sequencer.empty = ()=>{
+		audio.Sequencer.stopSequences();
+		d3.select('#play').attr('disabled','disabled');
+		d3.select('#stop').attr('disabled','disabled');
+		d3.select('#pause').attr('disabled','disabled');
+	} 
+	
+	d3.select('#play')
+	.on('click',function()
+	{
+		audio.Sequencer.startSequences(audio.ctx.currentTime);
+		d3.select(this).attr('disabled','disabled');
+		d3.select('#stop').attr('disabled',null);
+		d3.select('#pause').attr('disabled',null);
+	});
+	
+	d3.select('#pause').on('click',function(){
+		audio.Sequencer.pauseSequences();
+		d3.select(this).attr('disabled','disabled');
+		d3.select('#stop').attr('disabled',null);
+		d3.select('#play').attr('disabled',null);
+	});
+	
+	d3.select('#stop').on('click',function(){
+		audio.Sequencer.stopSequences();
+		d3.select(this).attr('disabled','disabled');
+		d3.select('#pause').attr('disabled','disabled');
+		d3.select('#play').attr('disabled',null);
+	});
+	
+	audio.Sequencer.stopped = ()=>{
+		d3.select('#stop').attr('disabled','disabled');
+		d3.select('#pause').attr('disabled','disabled');
+		d3.select('#play').attr('disabled',null);
+	}
+	
+	
 	// AudioNodeドラッグ用
 	drag = d3.behavior.drag()
 	.origin(function (d) { return d; })
@@ -107,7 +161,7 @@ export function initUI(){
 				bottom = node.y - node.height / 2 + bbox.y + bbox.height;
 			if(targetX >= left && targetX <= right && targetY >= top && targetY <= bottom)
 			{
-				console.log('hit',elm);
+//				console.log('hit',elm);
 				let from_ = {node:d.node,param:d.index};
 				let to_ = {node:node,param:elm.__data__.index};
 				audio.AudioNodeView.connect(from_,to_);
@@ -182,7 +236,7 @@ export function initUI(){
 		{name:'MediaStreamAudioSource',create:audio.ctx.createMediaStreamSource.bind(audio.ctx)},
 		{name:'WaveShaper',create:audio.ctx.createWaveShaper.bind(audio.ctx)},
 		{name:'EG',create:()=>new audio.EG()},
-		{name:'Sequencer',create:()=>new audio.Sequencer()}
+		{name:'Sequencer',create:()=>new audio.Sequencer(),editor:showSequenceEditor}
 	];
 	
 	if(audio.ctx.createMediaStreamDestination){
@@ -223,7 +277,7 @@ export function draw() {
 	})
 	.on('contextmenu',function(d){
 		// パラメータ編集画面の表示
-		showPanel.bind(this,d)();
+		d.editor();
 		d3.event.preventDefault();
 		d3.event.returnValue = false;
 	})
@@ -258,9 +312,9 @@ export function draw() {
 		if(d.statusPlay === audio.STATUS_PLAY_PLAYING){
 			d.statusPlay = audio.STATUS_PLAY_PLAYED;
 			sel.classed('play',false);
-			d.stop(0);
+			d.audioNode.stop(0);
 		} else if(d.statusPlay !== audio.STATUS_PLAY_PLAYED){
-			d.start(0);
+			d.audioNode.start(0);
 			d.statusPlay = audio.STATUS_PLAY_PLAYING;
 			sel.classed('play',true);
 		} else {
@@ -532,8 +586,11 @@ function showAudioNodePanel(d){
 	.append('td')
 	.text((d)=>d.name)
 	.on('click',function(dt){
-		console.log(d3.event);
-		var node = audio.AudioNodeView.create(dt.create());
+		console.log('挿入',dt);
+		
+		var editor = dt.editor || showPanel;
+		
+		var node = audio.AudioNodeView.create(dt.create(),editor);
 		node.x = d3.event.clientX;
 		node.y = d3.event.clientY;
 		draw();
@@ -541,4 +598,13 @@ function showAudioNodePanel(d){
 		// d.panel.dispose();
 	});
 	d.panel.show();
+}
+
+export function createAudioNodeView(name){
+	var obj = audioNodeCreators.find((d)=>{
+		if(d.name === name) return true;
+	});
+	if(obj){
+		return audio.AudioNodeView.create(obj.create(),obj.editor || showPanel);			
+	}
 }

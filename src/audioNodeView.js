@@ -44,7 +44,7 @@ export class ParamView extends NodeViewBase {
 }
 
 export class AudioNodeView extends NodeViewBase {
-	constructor(audioNode) { // audioNode はベースとなるノード
+	constructor(audioNode,editor) { // audioNode はベースとなるノード
 		super();
 		this.id = counter++;
 		this.audioNode = audioNode;
@@ -132,9 +132,10 @@ export class AudioNodeView extends NodeViewBase {
 		this.temp = {};
 		this.statusPlay = STATUS_PLAY_NOT_PLAYED;// not played.
 		this.panel = null;
+		this.editor = editor.bind(this,this);
 	}
 	
-	// 1つだけだとノードの削除で2つの場合はコネクションの削除
+	// ノードの削除
 	static remove(node) {
 			if(!node.removable)
 			{
@@ -143,109 +144,67 @@ export class AudioNodeView extends NodeViewBase {
 			// ノードの削除
 			for (var i = 0; i < AudioNodeView.audioNodes.length; ++i) {
 				if (AudioNodeView.audioNodes[i] === node) {
+					if(node.audioNode.dispose){
+						node.audioNode.dispose();
+					}
 					AudioNodeView.audioNodes.splice(i--, 1);
 				}
 			}
 
 			for (var i = 0; i < AudioNodeView.audioConnections.length; ++i) {
 				let n = AudioNodeView.audioConnections[i];
-				let disconnected = false;
-				if (n.from.node === node) {
-					if(n.from.param instanceof ParamView){
-							n.from.node.audioNode.disconnect(n);
-					} else if(n.to.param){
-						// toパラメータあり
-						if(n.to.param instanceof AudioParamView){
-							// AUdioParam
-							if(n.from.param){
-								// fromパラメータあり
-								n.from.node.audioNode.disconnect(n.to.param.audioParam,n.from.param);
-								disconnected = true;
-							} else {
-								// fromパラメータなし
-								n.from.node.audioNode.disconnect(n.to.param.audioParam);
-								disconnected = true;
-							}
-						} else {
-							// n.to.paramが数字
-							if(n.from.param){
-								// fromパラメータあり
-								if(n.from.param instanceof ParamView){
-									 n.from.node.audioNode.disconnect(n);
-								} else {
-										n.from.node.audioNode.disconnect(n.to.node.audioNode,n.from.param,n.to.param);
-								}
-								disconnected = true;
-							} else {
-								// fromパラメータなし
-								n.from.node.audioNode.disconnect(n.to.node.audioNode,0,n.to.param);
-								disconnected = true;
-							}
-						}
-					} else {
-						// to パラメータなし
-						if(n.from.param){
-							// fromパラメータあり
-							n.from.node.audioNode.disconnect(n.to.node.audioNode,n.from.param);
-							disconnected = true;
-						} else {
-							// fromパラメータなし
-							n.from.node.audioNode.disconnect(n.to.node.audioNode);
-							disconnected = true;
-						}
-					}
-				}
-
-				if(n.to.node === node){
-					// from パラメータあり
-					if(n.from.param){
-						if(n.from.param instanceof ParamView ){
-							n.from.node.audioNode.disconnect(n);
-						} else {
-							if(n.to.param){
-								// to パラメータあり
-								if(n.to.param instanceof AudioParamView){
-									// to パラメータがAudioParamView
-									n.from.node.audioNode.disconnect(n.to.param.audioParam,n.from.param);
-									disconnected = true;							
-								} else {
-									// to パラメータが数字
-									n.from.node.audioNode.disconnect(n.to.node.audioNode,n.from.param,n.to.param);
-									disconnected = true;
-								}
-							} else {
-								// to パラメータなし
-								n.from.node.audioNode.disconnect(n.to.node.audioNode,n.from.param);
-								disconnected = true;
-							}
-						}
-					} else {
-						// from パラメータなし
-						if(n.to.param){
-							// to パラメータあり
-							if(n.to.param instanceof AudioParamView){
-								// to パラメータがAudioParamView
-								n.from.node.audioNode.disconnect(n.to.param.audioParam);
-								disconnected = true;							
-							} else {
-								// to パラメータが数字
-								n.from.node.audioNode.disconnect(n.to.node.audioNode,0,n.to.param);
-								disconnected = true;
-							}
-						} else {
-							// to パラメータなし
-							n.from.node.audioNode.disconnect(n.to.node.audioNode);
-							disconnected = true;
-						}
-					}
-					
-				}
-				if(disconnected){
+				if (n.from.node === node || n.to.node === node) {
+					AudioNodeView.disconnect_(n);
 					AudioNodeView.audioConnections.splice(i--,1);
 				}
 			}
 	}
 
+  // 
+	static disconnect_(con) {
+		if (con.from.param instanceof ParamView) {
+			con.from.node.audioNode.disconnect(con);
+		} else if (con.to.param) {
+						// toパラメータあり
+			if (con.to.param instanceof AudioParamView) {
+				// AUdioParam
+				if (con.from.param) {
+					// fromパラメータあり
+					con.from.node.audioNode.disconnect(con.to.param.audioParam, con.from.param);
+				} else {
+					// fromパラメータなし
+					con.from.node.audioNode.disconnect(con.to.param.audioParam);
+				}
+						} else {
+				// con.to.paramが数字
+				if (con.from.param) {
+					// fromパラメータあり
+					if (con.from.param instanceof ParamView) {
+						con.from.node.audioNode.disconnect(con);
+					} else {
+						try {
+							con.from.node.audioNode.disconnect(con.to.node.audioNode, con.from.param, con.to.param);
+						} catch (e) {
+							console.log(e);
+						}
+					}
+				} else {
+					// fromパラメータなし
+					con.from.node.audioNode.disconnect(con.to.node.audioNode, 0, con.to.param);
+				}
+			}
+		} else {
+			// to パラメータなし
+			if (con.from.param) {
+				// fromパラメータあり
+				con.from.node.audioNode.disconnect(con.to.node.audioNode, con.from.param);
+			} else {
+				// fromパラメータなし
+				con.from.node.audioNode.disconnect(con.to.node.audioNode);
+			}
+		}
+	}
+	
 	// コネクションの接続を解除する
 	static disconnect(from_,to_) {
 			if(from_ instanceof AudioNodeView){
@@ -276,51 +235,13 @@ export class AudioNodeView extends NodeViewBase {
 				if(con.from.node === n.from.node && con.from.param === n.from.param 
 					&& con.to.node === n.to.node && con.to.param === n.to.param){
 					AudioNodeView.audioConnections.splice(i--,1);
-					if(con.from.param){
-						// fromパラメータあり
-						if(con.from.param instanceof ParamView){
-							con.from.node.audioNode.disconnect(con);
-						} else {
-							if(con.to.param){
-								// to パラメータあり
-								if(con.to.param instanceof AudioParamView){
-									// to AudioParamView
-									con.from.node.disconnect(con.to.param.audioParam,con.from.param);
-								} else if(con.to.param instanceof ParamView){
-									// to ParamView
-									con.from.node.disconnect(con);								
-								} else{
-									// to 数字
-									con.from.node.disconnect(con.to.node.audioNode,con.from.param,con.to.param);
-								}
-							} else {
-								// to パラメータなし
-								con.from.node.disconnect(con.to.node.audioNode,con.from.param);
-							}
-						}
-					} else {
-						// fromパラメータなし
-						if(con.to.param){
-							// to パラメータあり
-							if(con.to.param instanceof AudioParamView){
-								// to AudioParamView
-								con.from.node.disconnect(con.to.param.audioParam);
-							} else {
-								// to 数字
-								con.from.node.disconnect(con.to.node.audioNode,0,con.to.param);
-							}
-						} else {
-							// to パラメータなし
-							con.from.node.disconnect(con.to.node.audioNode);
-						}
+					AudioNodeView.disconnect_(con);
 					}
-				}
 			}
-
 	}
 
-	static create(audionode) {
-		var obj = new AudioNodeView(audionode);
+	static create(audionode,editor = ()=>{}) {
+		var obj = new AudioNodeView(audionode,editor);
 		AudioNodeView.audioNodes.push(obj);
 		return obj;
 	}

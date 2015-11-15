@@ -15,10 +15,7 @@ window.onload = () => {
 		}
 	});
 
-	var out = audio.AudioNodeView.create(audio.ctx.destination);
-	out.x = window.innerWidth / 2;
-	out.y = window.innerHeight / 2;
-	out.removable = false;
+
 	initUI();
 	draw();
 };
