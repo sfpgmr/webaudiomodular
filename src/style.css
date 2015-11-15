@@ -229,6 +229,14 @@
           background:skyblue;  
        }
      }
- 
    }
+
+  .seq-editor {
+    padding:5px;
+    font-size:10px;
+    input[type="text"] {
+      font-size:10px;
+    }
+  }
+   
    

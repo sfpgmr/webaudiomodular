@@ -206,7 +206,6 @@
      position: fixed;
      background:#444;
      opacity: 0.8;
- 
    }
    
    .player button {
@@ -243,4 +242,14 @@
      cursor: pointer;
      background:skyblue;
 }
+
+  .seq-editor {
+    padding:5px;
+    font-size:10px;
+  }
+
+  .seq-editor input[type="text"] {
+     font-size:10px;
+}
+   
    

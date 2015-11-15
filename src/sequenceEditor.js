@@ -21,6 +21,24 @@ export function showSequenceEditor(d)
 	 d.panel.width = 1024;
 	 d.panel.height = 768;
 	 d.panel.header.text('Sequence Editor');
+	 var div = d.panel.article.append('div').classed('seq-editor',true);
+	 div.append('span').text('Time Base:');
+	 div.append('input')
+	 .datum(d)
+	 .attr({'type':'text','size':'3'})
+	 .attr('value',(d)=>d.audioNode.tpb)
+	 .on('change',function(d){
+		 d.audioNode.tpb = d3.select(this).attr('value');
+	 });
+
+	 div.append('span').text('Tempo:');
+	 div.append('input')
+	 .datum(d)
+	 .attr({'type':'text','size':'3'})
+	 .attr('value',(d)=>d.audioNode.bpm)
+	 .on('change',function(d){
+		 d.audioNode.bpm = d3.select(this).attr('value');
+	 });
 	 
 	 
 	 d.panel.show();
