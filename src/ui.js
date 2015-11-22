@@ -1,12 +1,14 @@
 "use strict";
 import UUID from './uuid.core';
+import EventEmitter from './EventEmitter3';
 export const nodeHeight = 50;
 export const nodeWidth = 100;
 export const pointSize = 16;
 
 // panel window
-export class Panel {
+export class Panel  extends EventEmitter {
 	constructor(sel,prop){
+		super();
 		if(!prop || !prop.id){
 			prop = prop ? (prop.id = 'id-' + UUID.generate(),prop) :{ id:'id-' + UUID.generate()};
 		}
@@ -27,6 +29,7 @@ export class Panel {
 		this.selection.append('div')
 		.classed('panel-close',true)
 		.on('click',()=>{
+			this.emit('dispose');
 			this.dispose();
 		});
 
@@ -67,10 +70,12 @@ export class Panel {
 	
 	show(){
 		this.selection.style('visibility','visible');
+		this.emit('show');
 	}
 
 	hide(){
 		this.selection.style('visibility','hidden');
+		this.emit('hide');
 	}
 	
 	get isShow(){
@@ -108,6 +113,7 @@ Panel.prototype.drag = d3.behavior.drag()
 		sel.style(
 			{'left':dummy.style('left'),'top':dummy.style('top')}
 		);
+		d.emit('dragend');
 		dummy.remove();
 	});
 	

@@ -1,3 +1,5 @@
+"use strict";
 export * from './audioNodeView';
 export * from './eg';
-export * from './sequencer.js';
+export * from './sequencer';
+export function dummy(){};

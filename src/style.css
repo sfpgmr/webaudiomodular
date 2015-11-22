@@ -232,10 +232,45 @@
    }
 
   .seq-editor {
-    padding:5px;
+    user-select:none;
     font-size:10px;
+    text-align:center;
+    margin:auto;
     input[type="text"] {
       font-size:10px;
+      text-align:center;
+      padding:0px;
+      margin:0px;
+    }
+    
+    .track {
+      margin:none;
+      padding:none;
+      box-sizing: border-box;
+      display:inline-block;
+      width:250px;
+      height:700px;
+      border:1px dashed gray;  
+      &-header {
+        text-align: left;
+      }
+      table {
+        td {
+          font-family: monospace;
+          border:none;
+          &.meas {
+            border-top:1px solid dashed gray;
+          }
+        }
+      }
+      &:focus {
+        outline: 1px solid black;
+      }
+    }
+    
+    .header {
+      text-align: left;
+      padding:5px;
     }
   }
    

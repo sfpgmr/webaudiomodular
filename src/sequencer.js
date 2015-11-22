@@ -1,5 +1,9 @@
-import * as audio from './audio';
 "use strict";
+import * as audio from './audio';
+import EventEmitter from './eventEmitter3';
+import * as prop from './prop';
+
+
 
 export class EventBase {
 	constructor(step){
@@ -29,31 +33,54 @@ export class Command {
 	}
 }
 
+export var EventType  = {
+	Note:1,
+	Measure:2
+}
+
+export class Measure extends EventBase {
+	constructor(){
+		super(0);
+		this.type = EventType.Measure;
+	}
+}
+
 export class NoteEvent extends EventBase {
 	constructor(step = 96,note = 64,gate = 48,vel = 1.0,command = new Command()){
 		super(step);
 		this.note_ = note;
+		this.transopse_ = 0;
 		this.calcPitch();
 		this.gate = gate;
 		this.vel = vel;
 		this.command = command;
 		this.command.event = this;
+		this.type = EventType.Note;
 	}
 	
 	get note (){
 		 return this.note_;
 	}
+	
 	set note(v){
 		 this.note_ = v;
 		 this.calcPitch();
 	}
 	
+	set transpose(v){
+		if(v != this.transpose_){
+			this.transpose_ = v;
+			this.calcPitch();
+		}
+	}
+	
 	calcPitch(){
-		this.pitch = (440.0 / 32.0) * (Math.pow(2.0,((this.note_ - 9) / 12)));
+		this.pitch = (440.0 / 32.0) * (Math.pow(2.0,((this.note_ + this.transpose_ - 9) / 12)));
 	}
 	
 	process(time,track){
 			if(this.note){
+				this.transopse = track.transpose;
 				for(let j = 0,je = track.pitches.length;j < je;++j){
 					track.pitches[j].process(this.command,this.pitch,time);
 				}
@@ -68,15 +95,26 @@ export class NoteEvent extends EventBase {
 	}
 }
 
-export class Track {
+
+
+export class Track extends EventEmitter {
 	constructor(sequencer){
+		super();
 		this.events = [];
 		this.pointer = 0;
+
+		prop.defObservable(this,'step');
+		prop.defObservable(this,'end');
+		prop.defObservable(this,'name');
+		prop.defObservable(this,'transpose');
+		
 		this.step = 0;
 		this.end = false;
 		this.pitches = [];
 		this.velocities = [];
 		this.sequencer = sequencer;
+		this.name = '';
+		this.transpose = 0;
 	}
 }
 
@@ -88,10 +126,18 @@ export const SEQ_STATUS = {
 
 export const NUM_OF_TRACKS = 4;
 
-export class Sequencer {
+export class Sequencer extends EventEmitter {
 	constructor(){
-		this.bpm_ = 120.0; // tempo
-		this.tpb_ = 96.0; // 四分音符の解像度
+		super();
+		
+		prop.defObservable(this,'bpm');
+		prop.defObservable(this,'tpb');
+		prop.defObservable(this,'beat');
+		prop.defObservable(this,'bar');
+		prop.defObservable(this,'repeat');
+
+		this.bpm = 120.0; // tempo
+		this.tpb = 96.0; // 四分音符の解像度
 		this.beat = 4;
 		this.bar = 4; // 
 		this.tracks = [];
@@ -111,33 +157,22 @@ export class Sequencer {
 		}
 		this.startTime_ = 0;
 		this.currentTime_ = 0;
+		this.currentMeasure_ = 0;
 		this.calcStepTime();
 		this.repeat = false;
 		this.status_ = SEQ_STATUS.STOPPED;
+
+		//
+		this.on('bpm_chaneged',()=>{this.calcStepTime();});
+		this.on('tpb_chaneged',()=>{this.calcStepTime();});
+
 		Sequencer.sequencers.push(this);
 		if(Sequencer.added){
 			Sequencer.added();
 		}
 	}
 	
-	get tpb(){
-		return this.tpb_;
-	}
-	
-	set tpb(v){
-		this.tpb_ = v;
-		this.calcStepTime();
-	}
-	
-	get bpm(){
-		return this.bpm_;
-	}
-	
-	set bpm(v){
-		this.bpm_ = v;
-		this.calcStepTime();
-	}
-	
+
 	dispose(){
 		for(var i = 0;i < Sequencer.sequencers.length;++i)
 		{

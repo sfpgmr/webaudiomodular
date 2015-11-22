@@ -1,7 +1,10 @@
+"use strict";
 import * as ui from './ui';
 
 var counter = 0;
-export var ctx; 
+export var ctx;
+export function setCtx(c){ctx = c;}
+
 export class NodeViewBase {
 	constructor(x = 0, y = 0,width = ui.nodeWidth,height = ui.nodeHeight,name = '') {
 		this.x = x ;
@@ -44,7 +47,9 @@ export class ParamView extends NodeViewBase {
 }
 
 export class AudioNodeView extends NodeViewBase {
-	constructor(audioNode,editor) { // audioNode はベースとなるノード
+	constructor(audioNode,editor)
+	{
+		// audioNode はベースとなるノード
 		super();
 		this.id = counter++;
 		this.audioNode = audioNode;
@@ -338,6 +343,7 @@ export class AudioNodeView extends NodeViewBase {
 		});
 	}
 }
+
 
 AudioNodeView.audioNodes = [];
 AudioNodeView.audioConnections = [];

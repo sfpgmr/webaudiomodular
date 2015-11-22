@@ -1,5 +1,5 @@
-import * as audio from './audioNodeView';
 "use strict";
+import * as audio from './audio';
 
 export class EG {
 	constructor(){
@@ -35,7 +35,7 @@ export class EG {
 			}
 		}
 	}
-	
+		
 	process(to,com,v,t)
 	{
 		if(v > 0) {
