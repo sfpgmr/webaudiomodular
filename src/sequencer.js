@@ -78,7 +78,7 @@ export class NoteEvent extends EventBase {
 	constructor(step = 96,note = 64,gate = 48,vel = 1.0,command = new Command()){
 		super(step);
 		this.note_ = note;
-		this.transopse_ = 0;
+		this.transopse_ = 0.0;
 		this.calcPitch();
 		this.gate = gate;
 		this.vel = vel;
@@ -91,7 +91,19 @@ export class NoteEvent extends EventBase {
 	setNoteName(){
 			let oct = this.note / 12 | 0;
 			this.name = Notes[this.note % 12] + oct;
-	} 
+	}
+	setNoteNameToNote(noteName)
+	{
+		if(!noteName.match(/(C )|(C#)|(D )|(D#)|(E )|(F )|(F#)|(G )|(G#)|(A )|(A#)|(B )([0-9])/))
+		{
+			console.log(RegExp.$1,RegExp.$2);
+			for(let i in Notes){
+				if(Notes[i] === RegExp.$1){
+					this.note = parseFloat(i) + parseFloat(RegExp.$2);
+				}				
+			}
+		}
+	}
 	
 	get note (){
 		 return this.note_;

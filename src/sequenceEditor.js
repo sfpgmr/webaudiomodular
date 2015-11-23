@@ -126,17 +126,18 @@ export class SequenceEditor {
 	}
 }
 
+// エディタ本体
 function* doEditor(trackEdit) {
-	let keycode = 0;
-	let track = trackEdit.datum();
-	let editView = d3.select('#' + trackEdit.attr('id') + '-events');
-	let measure = 1;
-	let step = 1;
-	let rowIndex = 0;
-	let currentEventIndex = 0;
-	let cellIndex = 2;
-	let cancelEvent = false;
-	const NUM_ROW = 47;
+	let keycode = 0;// 入力されたキーコードを保持する変数
+	let track = trackEdit.datum();// 現在編集中のトラック
+	let editView = d3.select('#' + trackEdit.attr('id') + '-events');//編集画面のセレクション
+	let measure = 1;// 小節
+	let step = 1;// ステップNo
+	let rowIndex = 0;// 編集画面の現在行
+	let currentEventIndex = 0;// イベント配列の編集開始行
+	let cellIndex = 2;// 列インデックス
+	let cancelEvent = false;// イベントをキャンセルするかどうか
+	const NUM_ROW = 47;// １画面の行数
 	
 	function setInput() {
 		this.attr('contentEditable', 'true');
@@ -230,35 +231,48 @@ function* doEditor(trackEdit) {
 			switch (keycode) {
 				case 13://Enter
 					console.log('CR/LF');
-					let beforeCells = [];
-					let sr = rowIndex -1;
-					while(sr >= 0){
-						var target = d3.select(editView.node().rows[sr]);
-						if(target.datum().type === audio.EventType.Note){
-							beforeCells = target.node().cells;
-							break;
-						} 
-						--sr;
-					}
-					let curRow = editView.node().rows[rowIndex].cells;
+					// 現在の行が新規か編集中か
 					let flag = d3.select(editView.node().rows[rowIndex]).attr('data-new');
 					if(flag){
 						d3.select(editView.node().rows[rowIndex]).attr('data-new',null);
-						let noteNo = parseFloat(curRow[3].innerText || beforeCells[3]?beforeCells[3].innerText:'64');
+						// 1つ前のノートデータを検索する
+						let beforeCells = [];
+						let sr = rowIndex -1;
+						while(sr >= 0){
+							var target = d3.select(editView.node().rows[sr]);
+							if(target.datum().type === audio.EventType.Note){
+								beforeCells = target.node().cells;
+								break;
+							} 
+							--sr;
+						}
+						// 現在の編集行
+						let curRow = editView.node().rows[rowIndex].cells;
+						// エベントを生成する
+						// データが何も入力されていないときは、1つ前のノートデータを複製する。
+						// 1つ前のノートデータがないときや不正データの場合は、デフォルト値を代入する。
+						let noteNo = parseFloat(curRow[3].innerText || beforeCells[3]?beforeCells[3].innerText:'60');
+						if(isNaN(noteNo)) noteNo = 60;
 						let step = parseFloat(curRow[4].innerText || beforeCells[4]?beforeCells[4].innerText:'96');
+						if(isNaN(step)) noteNo = 96;
 						let gate = parseFloat(curRow[5].innerText || beforeCells[5]?beforeCells[5].innerText:'24');
+						if(isNaN(gate)) gate = 24;
 						let vel = parseFloat(curRow[6].innerText || beforeCells[6]?beforeCells[6].innerText:'1.0');
+						if(isNaN(vel)) gate = 1.0
 						let com = /*curRow[7].innerText || beforeCells[7]?beforeCells[7].innerText:*/new audio.Command();
 						var ev = new audio.NoteEvent(step,noteNo,gate,vel,com);
+						// トラックにデータをセット
 						track.insertEvent(ev,rowIndex + currentEventIndex);
 						if(rowIndex == NUM_ROW){
 							++currentEventIndex;
 						} else {
 							++rowIndex;
 						}
+						// 挿入後、再描画
 						drawEvent();
 						editView.node().rows[rowIndex].cells[cellIndex].focus();
 					} else {
+						//新規編集中の行でなければ、新規入力用行を挿入
 						insertEvent();
 					}
 //					loop = ;
