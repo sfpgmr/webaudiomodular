@@ -6,8 +6,11 @@ import * as prop from './prop';
 
 
 export class EventBase {
-	constructor(step){
-		this.step = step; 
+	constructor(step,name = ""){
+		this.step = step;
+		this.stepNo = 0;
+		this.measure = 0;
+		this.name =  name;
 	}
 }
 
@@ -34,16 +37,42 @@ export class Command {
 }
 
 export var EventType  = {
-	Note:1,
-	Measure:2
+	Note:Symbol(),
+	Measure:Symbol(),
+	TrackEnd:Symbol()
 }
 
+// 小節線
 export class Measure extends EventBase {
 	constructor(){
 		super(0);
 		this.type = EventType.Measure;
 	}
 }
+
+// Track End
+export class TrackEnd extends EventBase {
+	constructor(){
+		super(0);
+		this.type = EventType.TrackEnd;
+	}
+	
+}
+
+var Notes = [
+	'C ',
+	'C#',
+	'D ',
+	'D#',
+	'E ',
+	'F ',
+	'F#',
+	'G ',
+	'G#',
+	'A ',
+	'A#',
+	'B ',
+];
 
 export class NoteEvent extends EventBase {
 	constructor(step = 96,note = 64,gate = 48,vel = 1.0,command = new Command()){
@@ -56,7 +85,13 @@ export class NoteEvent extends EventBase {
 		this.command = command;
 		this.command.event = this;
 		this.type = EventType.Note;
+		this.setNoteName();
 	}
+	
+	setNoteName(){
+			let oct = this.note / 12 | 0;
+			this.name = Notes[this.note % 12] + oct;
+	} 
 	
 	get note (){
 		 return this.note_;
@@ -65,6 +100,7 @@ export class NoteEvent extends EventBase {
 	set note(v){
 		 this.note_ = v;
 		 this.calcPitch();
+		 this.setNoteName();
 	}
 	
 	set transpose(v){
@@ -102,7 +138,7 @@ export class Track extends EventEmitter {
 		super();
 		this.events = [];
 		this.pointer = 0;
-
+		this.events.push(new TrackEnd());
 		prop.defObservable(this,'step');
 		prop.defObservable(this,'end');
 		prop.defObservable(this,'name');
@@ -116,6 +152,66 @@ export class Track extends EventEmitter {
 		this.name = '';
 		this.transpose = 0;
 	}
+	
+	addEvent(ev){
+		if(this.events.length > 1)
+		{
+			var before = this.events[this.events.length - 2];
+			switch(before.type){
+				case EventType.Note:
+					ev.stepNo = before.stepNo + 1;
+					ev.measure = before.measure;
+					break;
+				case EventType.Measure:
+					ev.stepNo = 1;
+					ev.measure = before.measure + 1;
+					break;
+			}
+		} else {
+			ev.stepNo = 1;
+			ev.measure = 1;
+		}
+		this.events.splice(this.events.length - 1,0,ev);
+	}
+	
+	insertEvent(ev,index){
+		if(this.events.length > 1){
+			var before = this.events[index];
+			switch(before.type){
+				case EventType.Note:
+					ev.stepNo = before.stepNo + 1;
+					ev.measure = before.measure;
+				break;
+				case EventType.Measure:
+					ev.stepNo = 1;
+					ev.measure = before.measure + 1;
+				break;
+			}
+		}
+		this.events.splice(index,0,ev);
+		if(ev.type == EventType.Measure){
+			this.updateStepAndMeasure(index);		
+		}
+	}
+	
+	updateStepAndMeasure(index){
+		for(let i = index + 1,e = this.events.length;i<e;++i)
+		{
+			let before = this.events[i-1];
+			let current = this.events[i];
+			switch(before.type){
+				case EventType.Note:
+					current.stepNo = before.stepNo + 1;
+					current.measure = before.measure;
+				break;
+				case EventType.Measure:
+					current.stepNo = 1;
+					current.measure = before.measure + 1;
+				break;
+			}			
+		}
+	}
+	
 }
 
 export const SEQ_STATUS = {

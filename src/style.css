@@ -255,8 +255,13 @@
         text-align: left;
       }
       table {
-        td {
+        th,td {
+          font-size:12px;
           font-family: monospace;
+          color:#333;
+        }
+
+        td {
           border:none;
           &.meas {
             border-top:1px solid dashed gray;

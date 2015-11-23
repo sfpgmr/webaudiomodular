@@ -274,8 +274,13 @@
      text-align: left;
 }
 
-  .seq-editor .track table td {
+  .seq-editor .track table th,.seq-editor .track table td {
+     font-size:12px;
      font-family: monospace;
+     color:#333;
+}
+
+  .seq-editor .track table td {
      border:none;
 }
 

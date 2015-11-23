@@ -86,9 +86,11 @@ export class SequenceEditor {
 		let eventBody = eventEdit.append('tbody').attr('id', (d, i) => 'track-' + (i + 1) + '-events');
 		//this.drawEvents(eventBody);
 		
-		sequencer.audioNode.tracks[0].events.push(new audio.NoteEvent(48,47,6));
-		for(var i = 48;i< 58;++i){
-			sequencer.audioNode.tracks[0].events.push(new audio.NoteEvent(48,i,6));
+		for(var i = 0;i< 256;i += 8){
+			for(var j = i;j < (i+8);++j){
+				sequencer.audioNode.tracks[0].addEvent(new audio.NoteEvent(48,j,6));
+			}
+			sequencer.audioNode.tracks[0].addEvent(new audio.Measure());
 		}
 
 		// トラックエディタメイン
@@ -122,43 +124,7 @@ export class SequenceEditor {
 
 		sequencer.panel.show();
 	}
-
-	drawEvents(eventBody) {
-		eventBody.each(function (d, i) {
-			var sel = d3.select(this);
-			var evsel = sel.selectAll('tr').data(d.events);
-			var row = evsel.enter().append('tr');
-			var step = 0;
-			row.each(function (d, i) {
-				switch (d.type) {
-					case audio.EventType.Note:
-						break;
-					case audio.EventType.Measure:
-						break;
-				}
-			});
-
-		});
-	}
-
 }
-
-
-var Notes = [
-	'C ',
-	'C#',
-	'D ',
-	'D#',
-	'E ',
-	'F ',
-	'F#',
-	'G ',
-	'G#',
-	'A ',
-	'A#',
-	'B ',
-];
-
 
 function* doEditor(trackEdit) {
 	let keycode = 0;
@@ -166,22 +132,26 @@ function* doEditor(trackEdit) {
 	let editView = d3.select('#' + trackEdit.attr('id') + '-events');
 	let measure = 1;
 	let step = 1;
-	let loop = false;
 	let rowIndex = 0;
 	let currentEventIndex = 0;
 	let cellIndex = 2;
+	let cancelEvent = false;
+	const NUM_ROW = 47;
 	
 	function setInput() {
 		this.attr('contentEditable', 'true');
 		this.on('focus',function(){
 			console.log(this.parentNode.rowIndex - 1);
 			rowIndex = this.parentNode.rowIndex - 1;
+			cellIndex = this.cellIndex;
 		})
 	}
 	// 既存イベントの表示
+	function drawEvent()
 	{
-		let evflagment = track.events.slice();
-		let select = editView.selectAll('tr').data(track.events);
+		let evflagment = track.events.slice(currentEventIndex,currentEventIndex + NUM_ROW);
+		editView.selectAll('tr').remove();
+		let select = editView.selectAll('tr').data(evflagment);
 		let enter = select.enter();
 		let rows = enter.append('tr').attr('data-index',(d,i)=>i);
 		 rows.each(function (d, i) {
@@ -189,11 +159,9 @@ function* doEditor(trackEdit) {
 			 rowIndex = i; 
 				switch (d.type) {
 					case audio.EventType.Note:
-						row.append('td').text(measure);// Measeure #
-						row.append('td').text(step++);// Step #
-						let oct = d.note / 12 | 0;
-						let noteName = Notes[d.note % 12] + oct;
-						row.append('td').text(noteName).call(setInput);// Note
+						row.append('td').text(d.measure);// Measeure #
+						row.append('td').text(d.stepNo);// Step #
+						row.append('td').text(d.name).call(setInput);// Note
 						row.append('td').text(d.note).call(setInput);// Note #
 						row.append('td').text(d.step).call(setInput);// Step
 						row.append('td').text(d.gate).call(setInput);// Gate
@@ -201,18 +169,44 @@ function* doEditor(trackEdit) {
 						row.append('td').text(d.com).call(setInput);// Command
 						break;
 					case audio.EventType.Measure:
+						row.append('td').text('');// Measeure #
+						row.append('td').text('');// Step #
+						row.append('td').attr({'colspan':6,'tabindex':0}).text(' --- Measure End --- ');
+						break;
+					case audio.EventType.TrackEnd:
+						row.append('td').text('');// Measeure #
+						row.append('td').text('');// Step #
+						row.append('td').attr({'colspan':6,'tabindex':0}).text(' --- Track End --- ');
 						break;
 				}
 		});
-	}
 
-	do {
-			console.log('new line',rowIndex,track.events.length);
-		if (track.events.length == 0 || rowIndex > (track.events.length - 1)) {
-			var row = editView.append('tr');
+	}
+	
+	// イベントのフォーカス
+	function focusEvent(sel)
+	{
+		let evrow = d3.select(editView.node().rows[rowIndex]);
+		let ev = evrow.datum();
+		switch(ev.type){
+			case audio.EventType.Note:
+				editView.node().rows[rowIndex].cells[cellIndex].focus();
+				break;
+			case audio.EventType.Measure:
+				editView.node().rows[rowIndex].cells[2].focus();
+				break;
+			case audio.EventType.TrackEnd:
+				editView.node().rows[rowIndex].cells[2].focus();
+				break;
+		}
+	}
+	
+	// イベントの挿入
+	function insertEvent(){
+			var row = d3.select(editView.node().insertRow(rowIndex));
 			cellIndex = 2;
-			row.append('td').text(measure);// Measeure #
-			row.append('td').text(step++);// Step #
+			row.append('td')// Measeure #
+			row.append('td')// Step #
 			row.append('td').call(setInput);// Note
 			row.append('td').call(setInput);// Note #
 			row.append('td').call(setInput);// Step
@@ -220,61 +214,132 @@ function* doEditor(trackEdit) {
 			row.append('td').call(setInput);// Velocity
 			row.append('td').call(setInput);// Command
 			row.node().cells[cellIndex].focus();
+			row.attr('data-new',true); 
+	}
+
+	drawEvent();
+
+	while(true) 
+	{
+		console.log('new line',rowIndex,track.events.length);
+		if (track.events.length == 0 || rowIndex > (track.events.length - 1)) {
 		}
-		keycode = yield false;
-		var end = false;
-		while (!end) {
+		keyloop:
+		while (true) {
+			keycode = yield cancelEvent;
 			switch (keycode) {
 				case 13://Enter
-					loop = true;
-					end = true;
+					console.log('CR/LF');
+					let beforeCells = [];
+					let sr = rowIndex -1;
+					while(sr >= 0){
+						var target = d3.select(editView.node().rows[sr]);
+						if(target.datum().type === audio.EventType.Note){
+							beforeCells = target.node().cells;
+							break;
+						} 
+						--sr;
+					}
+					let curRow = editView.node().rows[rowIndex].cells;
+					let flag = d3.select(editView.node().rows[rowIndex]).attr('data-new');
+					if(flag){
+						d3.select(editView.node().rows[rowIndex]).attr('data-new',null);
+						let noteNo = parseFloat(curRow[3].innerText || beforeCells[3]?beforeCells[3].innerText:'64');
+						let step = parseFloat(curRow[4].innerText || beforeCells[4]?beforeCells[4].innerText:'96');
+						let gate = parseFloat(curRow[5].innerText || beforeCells[5]?beforeCells[5].innerText:'24');
+						let vel = parseFloat(curRow[6].innerText || beforeCells[6]?beforeCells[6].innerText:'1.0');
+						let com = /*curRow[7].innerText || beforeCells[7]?beforeCells[7].innerText:*/new audio.Command();
+						var ev = new audio.NoteEvent(step,noteNo,gate,vel,com);
+						track.insertEvent(ev,rowIndex + currentEventIndex);
+						if(rowIndex == NUM_ROW){
+							++currentEventIndex;
+						} else {
+							++rowIndex;
+						}
+						drawEvent();
+						editView.node().rows[rowIndex].cells[cellIndex].focus();
+					} else {
+						insertEvent();
+					}
+//					loop = ;
 					// デフォルト値の代入
-					// if(editView.node().rows[rowIndex].cells[2].match(/(C )|(C#)|(D )|(D#)|(E )|(F )|(F#)|(G )|(G#)|(A )|(A#)|(B )[0-9]/))
+					var ev = d3.select(editView.node().rows[rowIndex].cells[2]);
+					// if(editView.node().rows[rowIndex].cells[2].textNode.match(/(C )|(C#)|(D )|(D#)|(E )|(F )|(F#)|(G )|(G#)|(A )|(A#)|(B )[0-9]/))
 					// {
 					// 	
 					// 	
 					// } 
-					rowIndex++;
-					keycode = yield true;
+					//rowIndex++;
+					cancelEvent = true;
 					break;
 				case 39:// right Cursor
 					cellIndex++;
-					if (cellIndex > 7) {
+					if (cellIndex > (editView.node().rows[rowIndex].cells.length - 1))
+					{
 						cellIndex = 2;
 						if(rowIndex < (editView.node().rows.length - 1)){
 							++rowIndex;
 						} else {
 							++rowIndex;
-							loop = true;
-							end = true;
+							cancelEvent = true;
 							break;
 						}
 					}
-					editView.node().rows[rowIndex].cells[cellIndex].focus();
-					keycode = yield true;
+					focusEvent();
+					cancelEvent = true;
 					break;
 				case 37:// left Cursor
 					--cellIndex;
-					if(cellIndex <= 2){
+					if(cellIndex < 2){
 						if(rowIndex == 0){
 							
 						} else {
 							--rowIndex;
-							cellIndex = 7;
+							cellIndex = editView.node().rows[rowIndex].cells.length - 1;
 						}
 					}
-					editView.node().rows[rowIndex].cells[cellIndex].focus();
-					keycode = yield true;
+					focusEvent();
+					cancelEvent = true;
+					break;
+			  case 38:// Up Cursor
+					if(rowIndex > 0){
+						--rowIndex;
+						focusEvent();
+					} else {
+						if(currentEventIndex > 0){
+							--currentEventIndex;
+							drawEvent();
+							rowIndex = 0;
+							focusEvent();
+						} 
+					}
+					cancelEvent = true;
+					break; 
+				case 40:// Down Cursor
+					if(rowIndex == (NUM_ROW - 1))
+					{
+						if((currentEventIndex + NUM_ROW) < (track.events.length - 1)){
+							++currentEventIndex;
+							drawEvent();
+							focusEvent();
+						}
+					} else {
+						++rowIndex;
+						focusEvent();
+					}
+				
+					cancelEvent = true;
 					break;
 				case 106:// *
-					keycode = yield false;
+					cancelEvent = true;
 					break;
 				default:
-					keycode = yield false;
+					cancelEvent = false;
+					console.log('default');
 					break;
 			}
 		}
-	} while (loop);
+	}
 }
 
 
