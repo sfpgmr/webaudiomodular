@@ -4,7 +4,8 @@ import {initUI,draw,svg,createAudioNodeView } from '../src/draw';
 
 
 describe('AudioNodeTest', () => {
-	audio.ctx = new AudioContext();
+  
+  audio.setCtx(new AudioContext());
 	var osc, gain, filter, out, osc2, splitter, merger,eg,seq;
 
 	beforeEach(() => {
@@ -180,14 +181,14 @@ describe('AudioNodeTest', () => {
 		
 		// シーケンスデータの挿入
 		seq.audioNode.bpm = 120;
-		seq.audioNode.tracks[0].events.push(new audio.NoteEvent(48,47,6));
+		seq.audioNode.tracks[0].events.push(new audio.NoteEvent(48,47,6,1.0));
 		for(var i = 48;i< 110;++i){
-			seq.audioNode.tracks[0].events.push(new audio.NoteEvent(48,i,6));
+			seq.audioNode.tracks[0].events.push(new audio.NoteEvent(48,i,6,1.0));
 		}
 		
-		seq.audioNode.tracks[1].events.push(new audio.NoteEvent(192,0,6));
+		seq.audioNode.tracks[1].events.push(new audio.NoteEvent(192,0,6,1.0));
 		for(var i = 47;i< 110;++i){
-			seq.audioNode.tracks[1].events.push(new audio.NoteEvent(48,i,6));
+			seq.audioNode.tracks[1].events.push(new audio.NoteEvent(48,i,6,1.0));
 		}
 		draw();
 		expect(true).toBe(true);

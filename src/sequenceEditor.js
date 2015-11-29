@@ -25,7 +25,9 @@ const InputCommand =
   home:12,
   end:13,
   number:14,
-  note:15
+  note:15,
+  scrollUp:16,
+  scrollDown:17
 }
 
 //
@@ -118,6 +120,13 @@ const KeyBind =
     altKey:false,
     metaKey:false,
     inputCommand:InputCommand.pageUp
+    },{
+    keyCode:33,
+    ctrlKey:false,
+    shiftKey:true,
+    altKey:false,
+    metaKey:false,
+    inputCommand:InputCommand.scrollUp
     }],
   82:[{
     keyCode:82,
@@ -134,6 +143,13 @@ const KeyBind =
     altKey:false,
     metaKey:false,
     inputCommand:InputCommand.pageDown
+    },{
+    keyCode:34,
+    ctrlKey:false,
+    shiftKey:true,
+    altKey:false,
+    metaKey:false,
+    inputCommand:InputCommand.scrollDown
     }],
   67:[{
     keyCode:67,
@@ -572,7 +588,7 @@ function* doEditor(trackEdit,seqEditor) {
           row.append('td').text('');// Step #
           row.append('td')
           .attr({ 'colspan': 6, 'tabindex': 0 })
-          .text(' --- Measure End --- ')
+          .text(' --- (' + d.stepTotal + ') --- ')
           .on('focus',function(){
             rowIndex = this.parentNode.rowIndex - 1;
           });
@@ -871,6 +887,26 @@ function* doEditor(trackEdit,seqEditor) {
               focusEvent();
             }
             cancelEvent = true;
+          }
+          break;
+        // スクロールアップ
+        case InputCommand.scrollUp: 
+          {
+            if(currentEventIndex > 0){
+              --currentEventIndex;
+              drawEvent();
+              focusEvent();
+            }
+          }
+          break;
+        // スクロールダウン
+        case InputCommand.scrollDown: 
+          {
+            if((currentEventIndex + NUM_ROW) <= (track.events.length - 1)){
+              ++currentEventIndex;
+              drawEvent();
+              focusEvent();
+            }
           }
           break;
         // 先頭行に移動

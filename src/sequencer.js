@@ -36,7 +36,7 @@ export class Command {
 	}
 }
 
-export var EventType  = {
+export const EventType  = {
 	Note:Symbol(),
 	Measure:Symbol(),
 	TrackEnd:Symbol()
@@ -47,6 +47,7 @@ export class Measure extends EventBase {
 	constructor(){
 		super(0);
 		this.type = EventType.Measure;
+    this.stepTotal = 0;
 	}
   process(){
     
@@ -81,11 +82,10 @@ var Notes = [
 ];
 
 export class NoteEvent extends EventBase {
-	constructor(step = 0,note = 0,gate = 0,vel = 0,command = new Command()){
+	constructor(step = 0,note = 0,gate = 0,vel = 0.5,command = new Command()){
 		super(step);
-		this.note_ = note;
-		this.transopse_ = 0.0;
-		this.calcPitch();
+		this.transpose_ = 0.0;
+		this.note = note;
 		this.gate = gate;
 		this.vel = vel;
 		this.command = command;
@@ -154,7 +154,7 @@ export class NoteEvent extends EventBase {
 	}
 	
 	calcPitch(){
-		this.pitch = (440.0 / 32.0) * (Math.pow(2.0,((this.note_ + this.transpose_ - 9) / 12)));
+		this.pitch = (440.0 / 32.0) * (Math.pow(2.0,((this.note + this.transpose_ - 9) / 12)));
 	}
 	
 	process(time,track){
@@ -215,6 +215,7 @@ export class Track extends EventEmitter {
 			ev.measure = 1;
 		}
 		this.events.splice(this.events.length - 1,0,ev);
+    this.calcMeasureStepTotal(this.events.length - 2);
 	}
 	
 	insertEvent(ev,index){
@@ -240,7 +241,9 @@ export class Track extends EventEmitter {
 		} else {
 			this.updateStep(index);		
     }
+    this.calcMeasureStepTotal(index);
 	}
+    
 	updateStep(index){
 		for(let i = index + 1,e = this.events.length;i<e;++i)
 		{
@@ -275,6 +278,48 @@ export class Track extends EventEmitter {
 			}			
 		}
 	}
+  
+  calcMeasureStepTotal(index){
+    let events = this.events;
+    let stepTotal = 0;
+    let event = events[index];
+    if(event.type == EventType.Measure){
+      --index;
+      while(index >= 0){
+        let ev = events[index];
+        if(ev.type == EventType.Measure)
+        {
+          break;
+        } else {
+          stepTotal +=  ev.step;
+        }
+        --index;
+      }
+      event.stepTotal = stepTotal;
+      stepTotal = 0;
+      while(index < (events.length - 1)){
+        ++index;
+        let ev = events[index];
+        if(ev.type == EventType.Measure){
+          ev.stepTotal = stepTotal;
+          break;
+        } else {
+          stepTotal += ev.step;
+        }
+      }
+      return;
+    } else {
+      // 次のメジャーを探す
+      while(index < (events.length - 1)){
+        ++index;
+        let ev = events[index];
+        if(ev.type == EventType.Measure){
+          ev.stepTotal += event.step;
+          break;            
+        }
+      }
+    }
+  }
 
   // イベントの削除  
   deleteEvent(index){
