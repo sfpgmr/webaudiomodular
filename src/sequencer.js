@@ -6,7 +6,7 @@ import * as prop from './prop';
 
 
 export class EventBase {
-	constructor(step,name = ""){
+	constructor(step = 0,name = ""){
 		this.step = step;
 		this.stepNo = 0;
 		this.measure = 0;
@@ -48,6 +48,9 @@ export class Measure extends EventBase {
 		super(0);
 		this.type = EventType.Measure;
 	}
+  process(){
+    
+  }
 }
 
 // Track End
@@ -56,6 +59,9 @@ export class TrackEnd extends EventBase {
 		super(0);
 		this.type = EventType.TrackEnd;
 	}
+  process(){
+    
+  }
 	
 }
 
@@ -75,7 +81,7 @@ var Notes = [
 ];
 
 export class NoteEvent extends EventBase {
-	constructor(step = 96,note = 64,gate = 48,vel = 1.0,command = new Command()){
+	constructor(step = 0,note = 0,gate = 0,vel = 0,command = new Command()){
 		super(step);
 		this.note_ = note;
 		this.transopse_ = 0.0;
@@ -92,17 +98,42 @@ export class NoteEvent extends EventBase {
 			let oct = this.note / 12 | 0;
 			this.name = Notes[this.note % 12] + oct;
 	}
-	setNoteNameToNote(noteName)
+
+	setNoteNameToNote(noteName,defaultNoteName = "")
 	{
-		if(!noteName.match(/(C )|(C#)|(D )|(D#)|(E )|(F )|(F#)|(G )|(G#)|(A )|(A#)|(B )([0-9])/))
+    var matches = noteName.match(/(C#)|(C)|(D#)|(D)|(E)|(F#)|(F)|(G#)|(G)|(A#)|(A)|(B)/);
+		if(matches)
 		{
-			console.log(RegExp.$1,RegExp.$2);
-			for(let i in Notes){
-				if(Notes[i] === RegExp.$1){
-					this.note = parseFloat(i) + parseFloat(RegExp.$2);
-				}				
-			}
-		}
+      var n = matches[0];
+      var getNumber = new RegExp('([0-9]{1,2})');
+//      getNumber.compile();
+      getNumber.exec(noteName);
+      var o = RegExp.$1;
+      if(!o){
+        (new RegExp('([0-9]{1,2})')).exec(defaultNoteName);        
+        o = RegExp.$1;
+        if(!o){
+          return false;
+        }
+      }
+      if(n.length === 1) n += ' ';
+      
+      if(Notes.some((d,i)=>{
+          if(d === n){
+            this.note = parseFloat(i) + parseFloat(o) * 12;
+            return true;
+          }				
+         }))
+      {
+        return true;
+      } else {
+        this.setNoteName();
+        return false;
+      }
+		} else {
+      this.setNoteName();
+      return false; 
+    }
 	}
 	
 	get note (){
@@ -187,8 +218,8 @@ export class Track extends EventEmitter {
 	}
 	
 	insertEvent(ev,index){
-		if(this.events.length > 1){
-			var before = this.events[index];
+		if(this.events.length > 1 && index != 0){
+			var before = this.events[index-1];
 			switch(before.type){
 				case EventType.Note:
 					ev.stepNo = before.stepNo + 1;
@@ -199,13 +230,34 @@ export class Track extends EventEmitter {
 					ev.measure = before.measure + 1;
 				break;
 			}
-		}
+		} else {
+			ev.stepNo = 1;
+			ev.measure = 1;
+    }
 		this.events.splice(index,0,ev);
 		if(ev.type == EventType.Measure){
 			this.updateStepAndMeasure(index);		
-		}
+		} else {
+			this.updateStep(index);		
+    }
 	}
-	
+	updateStep(index){
+		for(let i = index + 1,e = this.events.length;i<e;++i)
+		{
+			let before = this.events[i-1];
+			let current = this.events[i];
+			switch(before.type){
+				case EventType.Note:
+					current.stepNo = before.stepNo + 1;
+					current.measure = before.measure;
+          break;
+				case EventType.Measure:
+          break;
+				break;
+			}			
+		}
+	}	
+  
 	updateStepAndMeasure(index){
 		for(let i = index + 1,e = this.events.length;i<e;++i)
 		{
@@ -223,6 +275,36 @@ export class Track extends EventEmitter {
 			}			
 		}
 	}
+
+  // イベントの削除  
+  deleteEvent(index){
+    var ev = this.events[index];
+    this.events.splice(index,1);
+    if(index == 0){
+      this.events[0].measure = 1;
+      this.events[0].stepNo = 1;
+      if(this.events.length > 1){
+        switch(ev.type){
+          case EventType.note:
+            this.updateStep(1);
+            break;
+          case EventType.Measure:
+            this.updateStepAndMeasure(1);
+            break;
+        }
+      }
+    } else if(index <= (this.events.length - 1))
+    {
+        switch(ev.type){
+          case EventType.note:
+            this.updateStep(index - 1);
+            break;
+          case EventType.Measure:
+            this.updateStepAndMeasure(index - 1);
+            break;
+        }
+    }
+  }
 	
 }
 
