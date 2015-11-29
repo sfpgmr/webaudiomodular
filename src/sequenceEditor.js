@@ -27,7 +27,9 @@ const InputCommand =
   number:14,
   note:15,
   scrollUp:16,
-  scrollDown:17
+  scrollDown:17,
+  delete:18,
+  linePaste:19
 }
 
 //
@@ -382,6 +384,22 @@ const KeyBind =
     altKey:false,
     metaKey:false,
     inputCommand:InputCommand.note
+    }],
+  46:[{
+    keyCode:46,
+    ctrlKey:false,
+    shiftKey:false,
+    altKey:false,
+    metaKey:false,
+    inputCommand:InputCommand.delete
+    }],
+  76:[{
+    keyCode:76,
+    ctrlKey:false,
+    shiftKey:false,
+    altKey:false,
+    metaKey:false,
+    inputCommand:InputCommand.linePaste
     }]
 };
 
@@ -538,6 +556,7 @@ function* doEditor(trackEdit,seqEditor) {
   let currentEventIndex = 0;// イベント配列の編集開始行
   let cellIndex = 2;// 列インデックス
   let cancelEvent = false;// イベントをキャンセルするかどうか
+  let lineBuffer = [];//行バッファ
   const NUM_ROW = 47;// １画面の行数
 	
   function setInput() {
@@ -637,7 +656,10 @@ function* doEditor(trackEdit,seqEditor) {
         this.row = editView.node().rows[rowIndex];
         this.cellIndex = cellIndex;
         this.rowIndex = rowIndex;
-        var row = d3.select(editView.node().insertRow(rowIndex))
+        this.exec_();
+      },
+      exec_(){
+        var row = d3.select(editView.node().insertRow(this.rowIndex))
         .datum(new audio.NoteEvent());
         cellIndex = 2;
         row.append('td');// Measeure #
@@ -655,11 +677,11 @@ function* doEditor(trackEdit,seqEditor) {
         row.append('td').call(setInput);// Gate
         row.append('td').call(setInput);// Velocity
         row.append('td').call(setInput);// Command
-        row.node().cells[cellIndex].focus();
+        row.node().cells[this.cellIndex].focus();
         row.attr('data-new', true);
       },
       redo(){
-        this.exec();       
+        this.exec_();       
       },
       undo(){
         editView.node().deleteRow(this.rowIndex);
@@ -930,6 +952,41 @@ function* doEditor(trackEdit,seqEditor) {
           }
           cancelEvent = true;
           break;
+        // 行削除
+        case InputCommand.delete:
+          {
+            seqEditor.undoManager.exec(
+              {
+                exec(){
+                  this.rowIndex = rowIndex;
+                  this.currentEventIndex = currentEventIndex;
+                  this.event = track.events[this.rowIndex];
+                  this.rowData = track.events[this.currentEventIndex + this.rowIndex];
+                  editView.node().deleteRow(this.rowIndex);
+                  this.lineBuffer = lineBuffer;
+                  lineBuffer = this.event;
+                  track.deleteEvent(this.currentEventIndex + this.rowIndex);
+                  drawEvent();
+                  focusEvent();
+                },
+                redo(){
+                  this.lineBuffer = lineBuffer;
+                  lineBuffer = this.event;
+                  editView.node().deleteRow(this.rowIndex);
+                  track.deleteEvent(this.currentEventIndex + this.rowIndex);
+                  drawEvent();
+                  focusEvent();
+                },
+                undo(){
+                  lineBuffer = this.lineBuffer;
+                  track.insertEvent(this.event,this.currentEventIndex + this.rowIndex);
+                  drawEvent();
+                  focusEvent();
+                }
+              }
+            );
+          }
+        break;
         // redo   
         case InputCommand.redo:
           seqEditor.undoManager.redo();

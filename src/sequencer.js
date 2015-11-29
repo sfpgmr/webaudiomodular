@@ -101,7 +101,7 @@ export class NoteEvent extends EventBase {
 
 	setNoteNameToNote(noteName,defaultNoteName = "")
 	{
-    var matches = noteName.match(/(C#)|(C)|(D#)|(D)|(E)|(F#)|(F)|(G#)|(G)|(A#)|(A)|(B)/);
+    var matches = noteName.match(/(C#)|(C)|(D#)|(D)|(E)|(F#)|(F)|(G#)|(G)|(A#)|(A)|(B)/i);
 		if(matches)
 		{
       var n = matches[0];
@@ -309,14 +309,29 @@ export class Track extends EventEmitter {
       }
       return;
     } else {
-      // 次のメジャーを探す
-      while(index < (events.length - 1)){
-        ++index;
-        let ev = events[index];
-        if(ev.type == EventType.Measure){
-          ev.stepTotal += event.step;
-          break;            
+      // 一つ前のメジャーを探す
+      let startIndex = 0;
+      if(index == 0){
+        startIndex = 0;
+      } else {
+        startIndex = index;
+        while(startIndex > 0){
+          --startIndex;
+          if(this.events[startIndex].type == EventType.Measure)
+          {
+            ++startIndex;
+            break;
+          }
         }
+      }
+      stepTotal = 0;
+      while(this.events[startIndex].type == EventType.Note)
+      {
+        stepTotal += this.events[startIndex].step;        
+        ++startIndex;
+      }  
+      if(this.events[startIndex].type == EventType.Measure){
+        this.events[startIndex].stepTotal = stepTotal;
       }
     }
   }
@@ -349,8 +364,8 @@ export class Track extends EventEmitter {
             break;
         }
     }
+    this.calcMeasureStepTotal(index);
   }
-	
 }
 
 export const SEQ_STATUS = {
