@@ -12,6 +12,9 @@ export class EventBase {
 		this.measure = 0;
 		this.name =  name;
 	}
+  clone(){
+    return new EventBase(this.step,this.name);
+  }
 }
 
 export function setValueAtTime(audioParam,value,time)
@@ -94,6 +97,10 @@ export class NoteEvent extends EventBase {
 		this.setNoteName();
 	}
 	
+  clone(){
+    return new NoteEvent(this.step,this.note,this.gate,this.vel,this.command);
+  }
+  
 	setNoteName(){
 			let oct = this.note / 12 | 0;
 			this.name = Notes[this.note % 12] + oct;

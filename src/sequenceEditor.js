@@ -395,7 +395,7 @@ const KeyBind =
     }],
   76:[{
     keyCode:76,
-    ctrlKey:false,
+    ctrlKey:true,
     shiftKey:false,
     altKey:false,
     metaKey:false,
@@ -440,7 +440,7 @@ export class SequenceEditor {
       .attr({ 'type': 'text', 'size': '3' })
       .attr('value', (d) => sequencer.audioNode.bpm)
       .on('change', () => {
-        sequencer.audioNode.bpm = parseFloat(d3.select(this).attr('value'), 10);
+        sequencer.audioNode.bpm = parseFloat(d3.select(this).attr('value'));
       })
       .call(function () {
         sequencer.audioNode.on('bpm_changed', (v) => {
@@ -453,7 +453,7 @@ export class SequenceEditor {
       .datum(sequencer)
       .attr({ 'type': 'text', 'size': '3', 'value': (d) => sequencer.audioNode.beat })
       .on('change', (d) => {
-        sequencer.audioNode.beat = parseFloat(d3.select(this).attr('value'), 10);
+        sequencer.audioNode.beat = parseFloat(d3.select(this).attr('value'));
       });
 
     div.append('span').text(' / ');
@@ -461,7 +461,7 @@ export class SequenceEditor {
       .datum(sequencer)
       .attr({ 'type': 'text', 'size': '3', 'value': (d) => sequencer.audioNode.bar })
       .on('change', (d) => {
-        sequencer.audioNode.bar = parseFloat(d3.select(this).attr('value'), 10);
+        sequencer.audioNode.bar = parseFloat(d3.select(this).attr('value'));
       });
 
 
@@ -556,7 +556,7 @@ function* doEditor(trackEdit,seqEditor) {
   let currentEventIndex = 0;// イベント配列の編集開始行
   let cellIndex = 2;// 列インデックス
   let cancelEvent = false;// イベントをキャンセルするかどうか
-  let lineBuffer = [];//行バッファ
+  let lineBuffer = null;//行バッファ
   const NUM_ROW = 47;// １画面の行数
 	
   function setInput() {
@@ -985,6 +985,35 @@ function* doEditor(trackEdit,seqEditor) {
                 }
               }
             );
+          }
+        break;
+        // ラインバッファの内容をペーストする
+        case InputCommand.linePaste:
+          {
+            if(lineBuffer){
+              seqEditor.undoManager.exec(
+                {
+                  exec(){
+                    this.rowIndex = rowIndex;
+                    this.lineBuffer = lineBuffer;
+                    track.insertEvent(lineBuffer.clone(),rowIndex);
+                    drawEvent();
+                    focusEvent();
+                  },
+                  redo(){
+                    track.insertEvent(this.lineBuffer.clone(),this.rowIndex);
+                    drawEvent();
+                    focusEvent();
+                  },
+                  undo(){
+                    track.deleteEvent(this.rowIndex);
+                    drawEvent();
+                    focusEvent();
+                  }
+                }
+              );
+            }
+            cancelEvent = true;
           }
         break;
         // redo   
