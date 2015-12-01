@@ -5,403 +5,403 @@ import {UndoManager} from './undo';
 
 
 const InputType = {
-  keybord:0,
-  midi:1
+  keybord: 0,
+  midi: 1
 }
 
-const InputCommand = 
-{
-  enter:1,
-  esc:2,
-  right:3,
-  left:4,
-  up:5,
-  down:6,
-  insertMeasure:7,
-  undo:8,
-  redo:9,
-  pageUp:10,
-  pageDown:11,
-  home:12,
-  end:13,
-  number:14,
-  note:15,
-  scrollUp:16,
-  scrollDown:17,
-  delete:18,
-  linePaste:19
-}
+const InputCommand =
+  {
+    enter: { id: 1, name: 'ノートデータ挿入' },
+    esc: { id: 2, name: 'キャンセル' },
+    right: { id: 3, name: 'カーソル移動（右）' },
+    left: { id: 4, name: 'カーソル移動（左）' },
+    up: { id: 5, name: 'カーソル移動（上）' },
+    down: { id: 6, name: 'カーソル移動（下）' },
+    insertMeasure: { id: 7, name: '小節線挿入' },
+    undo: { id: 8, name: 'アンドゥ' },
+    redo: { id: 9, name: 'リドゥ' },
+    pageUp: { id: 10, name: 'ページアップ' },
+    pageDown: { id: 11, name: 'ページダウン' },
+    home: { id: 12, name: '先頭行に移動' },
+    end: { id: 13, name: '終端行に移動' },
+    number: { id: 14, name: '数字入力' },
+    note: { id: 15, name: 'ノート入力' },
+    scrollUp: { id: 16, name: '高速スクロールアップ' },
+    scrollDown: { id: 17, name: '高速スクロールダウン' },
+    delete: { id: 18, name: '行削除' },
+    linePaste: { id: 19, name: '行ペースト' }
+  }
 
 //
-const KeyBind = 
-{
-  13:[{
-      keyCode:13,
-      ctrlKey:false,
-      shiftKey:false,
-      altKey:false,
-      metaKey:false,
-      inputCommand:InputCommand.enter
+const KeyBind =
+  {
+    13: [{
+      keyCode: 13,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.enter
     }],
-  27:[{
-    keyCode:27,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.esc
-  }],
-  32:[{
-    keyCode:32,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.right
-  }],
-  39:[{
-    keyCode:39,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.right
-  }],
-  37:[{
-    keyCode:37,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.left
-  }],
-  38:[{
-    keyCode:38,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.up
+    27: [{
+      keyCode: 27,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.esc
     }],
-  40:[{
-    keyCode:40,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.down
+    32: [{
+      keyCode: 32,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.right
     }],
-  106:[{
-    keyCode:106,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.insertMeasure
+    39: [{
+      keyCode: 39,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.right
     }],
-  90:[{
-    keyCode:90,
-    ctrlKey:true,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.undo
+    37: [{
+      keyCode: 37,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.left
     }],
-  89:[{
-    keyCode:89,
-    ctrlKey:true,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.redo
+    38: [{
+      keyCode: 38,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.up
     }],
-  33:[{
-    keyCode:33,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.pageUp
-    },{
-    keyCode:33,
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.scrollUp
+    40: [{
+      keyCode: 40,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.down
     }],
-  82:[{
-    keyCode:82,
-    ctrlKey:true,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.pageUp
+    106: [{
+      keyCode: 106,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.insertMeasure
     }],
-  34:[{
-    keyCode:34,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.pageDown
-    },{
-    keyCode:34,
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.scrollDown
+    90: [{
+      keyCode: 90,
+      ctrlKey: true,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.undo
     }],
-  67:[{
-    keyCode:67,
-    ctrlKey:true,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.pageDown
-    },{
-    keyCode:67,
-    note:'C',
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    },{
-    keyCode:67,
-    note:'C',
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
+    33: [{
+      keyCode: 33,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.pageUp
+    }, {
+        keyCode: 33,
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.scrollUp
+      }],
+    82: [{
+      keyCode: 82,
+      ctrlKey: true,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.pageUp
     }],
-  36:[{
-    keyCode:36,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.home
+    34: [{
+      keyCode: 34,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.pageDown
+    }, {
+        keyCode: 34,
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.scrollDown
+      }],
+    67: [{
+      keyCode: 67,
+      ctrlKey: true,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.pageDown
+    }, {
+        keyCode: 67,
+        note: 'C',
+        ctrlKey: false,
+        shiftKey: false,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.note
+      }, {
+        keyCode: 67,
+        note: 'C',
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.note
+      }],
+    36: [{
+      keyCode: 36,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.home
     }],
-  35:[{
-    keyCode:35,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.end
+    35: [{
+      keyCode: 35,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.end
     }],
-  96:[{
-    keyCode:96,
-    number:0,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    96: [{
+      keyCode: 96,
+      number: 0,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  97:[{
-    keyCode:97,
-    number:1,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    97: [{
+      keyCode: 97,
+      number: 1,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  98:[{
-    keyCode:98,
-    number:2,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    98: [{
+      keyCode: 98,
+      number: 2,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  99:[{
-    keyCode:99,
-    number:3,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    99: [{
+      keyCode: 99,
+      number: 3,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  100:[{
-    keyCode:100,
-    number:4,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    100: [{
+      keyCode: 100,
+      number: 4,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  101:[{
-    keyCode:101,
-    number:5,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    101: [{
+      keyCode: 101,
+      number: 5,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  102:[{
-    keyCode:102,
-    number:6,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    102: [{
+      keyCode: 102,
+      number: 6,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  103:[{
-    keyCode:103,
-    number:7,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    103: [{
+      keyCode: 103,
+      number: 7,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  104:[{
-    keyCode:104,
-    number:8,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    104: [{
+      keyCode: 104,
+      number: 8,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  105:[{
-    keyCode:105,
-    number:9,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.number
+    105: [{
+      keyCode: 105,
+      number: 9,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.number
     }],
-  65:[{
-    keyCode:65,
-    note:'A',
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    },{
-    keyCode:65,
-    note:'A',
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    }],    
-  66:[{
-    keyCode:66,
-    note:'B',
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    },{
-    keyCode:66,
-    note:'B',
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
+    65: [{
+      keyCode: 65,
+      note: 'A',
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.note
+    }, {
+        keyCode: 65,
+        note: 'A',
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.note
+      },
+      {
+        keyCode: 65,
+        ctrlKey: true,
+        shiftKey: false,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.redo
+      }],
+    66: [{
+      keyCode: 66,
+      note: 'B',
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.note
+    }, {
+        keyCode: 66,
+        note: 'B',
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.note
+      }],
+    68: [{
+      keyCode: 68,
+      note: 'D',
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.note
+    }, {
+        keyCode: 68,
+        note: 'D',
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.note
+      }],
+    69: [{
+      keyCode: 69,
+      note: 'E',
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.note
+    }, {
+        keyCode: 69,
+        note: 'E',
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.note
+      }],
+    70: [{
+      keyCode: 70,
+      note: 'F',
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.note
+    }, {
+        keyCode: 70,
+        note: 'F',
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.note
+      }],
+    71: [{
+      keyCode: 71,
+      note: 'G',
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.note
+    }, {
+        keyCode: 71,
+        note: 'G',
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+        inputCommand: InputCommand.note
+      }],
+    89: [{
+      keyCode: 89,
+      ctrlKey: true,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.delete
     }],
-  68:[{
-    keyCode:68,
-    note:'D',
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    },{
-    keyCode:68,
-    note:'D',
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    }],
-  69:[{
-    keyCode:69,
-    note:'E',
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    },{
-    keyCode:69,
-    note:'E',
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    }],
-  70:[{
-    keyCode:70,
-    note:'F',
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    },{
-    keyCode:70,
-    note:'F',
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    }],
-  71:[{
-    keyCode:71,
-    note:'G',
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    },{
-    keyCode:71,
-    note:'G',
-    ctrlKey:false,
-    shiftKey:true,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.note
-    }],
-  46:[{
-    keyCode:46,
-    ctrlKey:false,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.delete
-    }],
-  76:[{
-    keyCode:76,
-    ctrlKey:true,
-    shiftKey:false,
-    altKey:false,
-    metaKey:false,
-    inputCommand:InputCommand.linePaste
+    76: [{
+      keyCode: 76,
+      ctrlKey: true,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      inputCommand: InputCommand.linePaste
     }]
-};
+  };
 
 export class SequenceEditor {
   constructor(sequencer) {
@@ -490,7 +490,7 @@ export class SequenceEditor {
     let eventBody = eventEdit.append('tbody').attr('id', (d, i) => 'track-' + (i + 1) + '-events');
     //this.drawEvents(eventBody);
 
-		// テストデータ
+    // テストデータ
     for (var i = 0; i < 127; i += 8) {
       for (var j = i; j < (i + 8); ++j) {
         sequencer.audioNode.tracks[0].addEvent(new audio.NoteEvent(48, j, 6));
@@ -502,7 +502,7 @@ export class SequenceEditor {
 
     trackEdit.each(function (d) {
       if (!this.editor) {
-        this.editor = doEditor(d3.select(this),self_);
+        this.editor = doEditor(d3.select(this), self_);
         this.editor.next();
         this.sequencer = sequencer;
       }
@@ -514,13 +514,13 @@ export class SequenceEditor {
       console.log(e.keyCode);
       let key = KeyBind[e.keyCode];
       let ret = {};
-      if(key){
-        key.some((d)=>{
-          if(d.ctrlKey == e.ctrlKey
+      if (key) {
+        key.some((d) => {
+          if (d.ctrlKey == e.ctrlKey
             && d.shiftKey == e.shiftKey
             && d.altKey == e.altKey
             && d.metaKey == e.metaKey
-          ){
+            ) {
             ret = this.editor.next(d);
             return true;
           }
@@ -546,7 +546,7 @@ export class SequenceEditor {
 }
 
 // エディタ本体
-function* doEditor(trackEdit,seqEditor) {
+function* doEditor(trackEdit, seqEditor) {
   let keycode = 0;// 入力されたキーコードを保持する変数
   let track = trackEdit.datum();// 現在編集中のトラック
   let editView = d3.select('#' + trackEdit.attr('id') + '-events');//編集画面のセレクション
@@ -583,21 +583,21 @@ function* doEditor(trackEdit,seqEditor) {
           row.append('td').text(d.measure);// Measeure #
           row.append('td').text(d.stepNo);// Step #
           row.append('td').text(d.name).call(setInput)// Note
-          .on('blur',function(d){
-            d.setNoteNameToNote(this.innerText);
-            this.innerText = d.name;
-            // NoteNo表示も更新
-            this.parentNode.cells[3].innerText = d.note;
-          });// Note
+            .on('blur', function (d) {
+              d.setNoteNameToNote(this.innerText);
+              this.innerText = d.name;
+              // NoteNo表示も更新
+              this.parentNode.cells[3].innerText = d.note;
+            });// Note
           row.append('td').text(d.note).call(setInput)// Note #
-          .on('blur',function(d){
-            d.note = parseFloat(this.innerText);
-            this.parentNode.cells[2].innerText = d.name;
-          });
+            .on('blur', function (d) {
+              d.note = parseFloat(this.innerText);
+              this.parentNode.cells[2].innerText = d.name;
+            });
           row.append('td').text(d.step).call(setInput)// Step
-          .on('blur',function(d){
-            d.step = parseInt(this.innerText);
-          })
+            .on('blur', function (d) {
+              d.step = parseInt(this.innerText);
+            })
           row.append('td').text(d.gate).call(setInput);// Gate
           row.append('td').text(d.vel).call(setInput);// Velocity
           row.append('td').text(d.com).call(setInput);// Command
@@ -606,27 +606,27 @@ function* doEditor(trackEdit,seqEditor) {
           row.append('td').text('');// Measeure #
           row.append('td').text('');// Step #
           row.append('td')
-          .attr({ 'colspan': 6, 'tabindex': 0 })
-          .text(' --- (' + d.stepTotal + ') --- ')
-          .on('focus',function(){
-            rowIndex = this.parentNode.rowIndex - 1;
-          });
+            .attr({ 'colspan': 6, 'tabindex': 0 })
+            .text(' --- (' + d.stepTotal + ') --- ')
+            .on('focus', function () {
+              rowIndex = this.parentNode.rowIndex - 1;
+            });
           break;
         case audio.EventType.TrackEnd:
           row.append('td').text('');// Measeure #
           row.append('td').text('');// Step #
           row.append('td')
-          .attr({ 'colspan': 6, 'tabindex': 0 })
-          .text(' --- Track End --- ')
-          .on('focus',function(){
-            rowIndex = this.parentNode.rowIndex - 1;
-          });
-;
+            .attr({ 'colspan': 6, 'tabindex': 0 })
+            .text(' --- Track End --- ')
+            .on('focus', function () {
+              rowIndex = this.parentNode.rowIndex - 1;
+            });
+          ;
           break;
       }
     });
-    
-    if(rowIndex > (evflagment.length - 1)){
+
+    if (rowIndex > (evflagment.length - 1)) {
       rowIndex = evflagment.length - 1;
     }
 
@@ -652,26 +652,26 @@ function* doEditor(trackEdit,seqEditor) {
   // イベントの挿入
   function insertEvent(rowIndex) {
     seqEditor.undoManager.exec({
-      exec(){
+      exec() {
         this.row = editView.node().rows[rowIndex];
         this.cellIndex = cellIndex;
         this.rowIndex = rowIndex;
         this.exec_();
       },
-      exec_(){
+      exec_() {
         var row = d3.select(editView.node().insertRow(this.rowIndex))
-        .datum(new audio.NoteEvent());
+          .datum(new audio.NoteEvent());
         cellIndex = 2;
         row.append('td');// Measeure #
         row.append('td');// Step #
         row.append('td').call(setInput)
-        .on('blur',function(d){
-          if(this.innerText != '' && d.setNoteNameToNote(this.innerText)){
-            this.innerText = d.name;
-            // NoteNo表示も更新
-            this.parentNode.cells[3].innerText = d.note;
-          }
-        });// Note
+          .on('blur', function (d) {
+            if (this.innerText != '' && d.setNoteNameToNote(this.innerText)) {
+              this.innerText = d.name;
+              // NoteNo表示も更新
+              this.parentNode.cells[3].innerText = d.note;
+            }
+          });// Note
         row.append('td').call(setInput);// Note #
         row.append('td').call(setInput);// Step
         row.append('td').call(setInput);// Gate
@@ -680,10 +680,10 @@ function* doEditor(trackEdit,seqEditor) {
         row.node().cells[this.cellIndex].focus();
         row.attr('data-new', true);
       },
-      redo(){
-        this.exec_();       
+      redo() {
+        this.exec_();
       },
-      undo(){
+      undo() {
         editView.node().deleteRow(this.rowIndex);
         this.row.cells[this.cellIndex].focus();
       }
@@ -711,12 +711,12 @@ function* doEditor(trackEdit,seqEditor) {
     // データが何も入力されていないときは、1つ前のノートデータを複製する。
     // 1つ前のノートデータがないときや不正データの場合は、デフォルト値を代入する。
     let noteNo = 0;
-    if(cellIndex == 2) {
-     let note = editView.node().rows[rowIndex].cells[cellIndex].innerText;
-     ev.setNoteNameToNote(note,(beforeCells[2] ? beforeCells[2].innerText:'')); 
-     noteNo = ev.note;
+    if (cellIndex == 2) {
+      let note = editView.node().rows[rowIndex].cells[cellIndex].innerText;
+      ev.setNoteNameToNote(note, (beforeCells[2] ? beforeCells[2].innerText : ''));
+      noteNo = ev.note;
     } else {
-     noteNo = parseFloat(curRow[3].innerText || (beforeCells[3] ? beforeCells[3].innerText : '60'));
+      noteNo = parseFloat(curRow[3].innerText || (beforeCells[3] ? beforeCells[3].innerText : '60'));
     }
     if (isNaN(noteNo)) noteNo = 60;
     let step = parseFloat(curRow[4].innerText || (beforeCells[4] ? beforeCells[4].innerText : '96'));
@@ -735,7 +735,7 @@ function* doEditor(trackEdit,seqEditor) {
     //            var ev = new audio.NoteEvent(step, noteNo, gate, vel, com);
     // トラックにデータをセット
     track.insertEvent(ev, rowIndex + currentEventIndex);
-    if(down){
+    if (down) {
       if (rowIndex == (NUM_ROW - 1)) {
         ++currentEventIndex;
       } else {
@@ -755,8 +755,8 @@ function* doEditor(trackEdit,seqEditor) {
     keyloop:
     while (true) {
       let input = yield cancelEvent;
-      switch (input.inputCommand) {
-        case InputCommand.enter://Enter
+      switch (input.inputCommand.id) {
+        case InputCommand.enter.id://Enter
           console.log('CR/LF');
           // 現在の行が新規か編集中か
           let flag = d3.select(editView.node().rows[rowIndex]).attr('data-new');
@@ -765,17 +765,17 @@ function* doEditor(trackEdit,seqEditor) {
           } else {
             //新規編集中の行でなければ、新規入力用行を挿入
             insertEvent(rowIndex);
-          } 
+          }
           cancelEvent = true;
           break;
-        case InputCommand.right:// right Cursor
+        case InputCommand.right.id:// right Cursor
           {
             cellIndex++;
             let curRow = editView.node().rows;
             if (cellIndex > (curRow[rowIndex].cells.length - 1)) {
               cellIndex = 2;
               if (rowIndex < (curRow.length - 1)) {
-                if(d3.select(curRow[rowIndex]).attr('data-new')){
+                if (d3.select(curRow[rowIndex]).attr('data-new')) {
                   endNewInput();
                 } else {
                   ++rowIndex;
@@ -789,18 +789,18 @@ function* doEditor(trackEdit,seqEditor) {
             cancelEvent = true;
           }
           break;
-        case InputCommand.number:
+        case InputCommand.number.id:
           {
             let curRow = editView.node().rows[rowIndex];
             let curData = d3.select(curRow).datum();
-            if(curData.type != audio.EventType.Note){
+            if (curData.type != audio.EventType.Note) {
               //新規編集中の行でなければ、新規入力用行を挿入
               insertEvent(rowIndex);
               cellIndex = 3;
               let cell = editView.node().rows[rowIndex].cells[cellIndex];
               cell.innerText = input.number;
               let sel = window.getSelection();
-              sel.collapse(cell,1);
+              sel.collapse(cell, 1);
               // sel.select();
               cancelEvent = true;
             } else {
@@ -808,17 +808,17 @@ function* doEditor(trackEdit,seqEditor) {
             }
           }
           break;
-        case InputCommand.note:
+        case InputCommand.note.id:
           {
             let curRow = editView.node().rows[rowIndex];
             let curData = d3.select(curRow).datum();
-            if(curData.type != audio.EventType.Note){
+            if (curData.type != audio.EventType.Note) {
               //新規編集中の行でなければ、新規入力用行を挿入
               insertEvent(rowIndex);
               let cell = editView.node().rows[rowIndex].cells[cellIndex];
               cell.innerText = input.note;
               let sel = window.getSelection();
-              sel.collapse(cell,1);
+              sel.collapse(cell, 1);
               // sel.select();
               cancelEvent = true;
             } else {
@@ -826,17 +826,17 @@ function* doEditor(trackEdit,seqEditor) {
             }
           }
           break;
-        case InputCommand.left:// left Cursor
+        case InputCommand.left.id:// left Cursor
           {
             let curRow = editView.node().rows;
             --cellIndex;
             if (cellIndex < 2) {
               if (rowIndex == 0) {
-  
+
               } else {
-                  if(d3.select(curRow[rowIndex]).attr('data-new')){
-                    endNewInput(false);
-                  } 
+                if (d3.select(curRow[rowIndex]).attr('data-new')) {
+                  endNewInput(false);
+                }
                 --rowIndex;
                 cellIndex = editView.node().rows[rowIndex].cells.length - 1;
               }
@@ -845,12 +845,12 @@ function* doEditor(trackEdit,seqEditor) {
             cancelEvent = true;
           }
           break;
-        case InputCommand.up:// Up Cursor
+        case InputCommand.up.id:// Up Cursor
           {
             let curRow = editView.node().rows;
-            if(d3.select(curRow[rowIndex]).attr('data-new')){
+            if (d3.select(curRow[rowIndex]).attr('data-new')) {
               endNewInput(false);
-            } 
+            }
             if (rowIndex > 0) {
               --rowIndex;
               focusEvent();
@@ -865,12 +865,12 @@ function* doEditor(trackEdit,seqEditor) {
             cancelEvent = true;
           }
           break;
-        case InputCommand.down:// Down Cursor
+        case InputCommand.down.id:// Down Cursor
           {
             let curRow = editView.node().rows;
-            if(d3.select(curRow[rowIndex]).attr('data-new')){
+            if (d3.select(curRow[rowIndex]).attr('data-new')) {
               endNewInput(false);
-            } 
+            }
             if (rowIndex == (NUM_ROW - 1)) {
               if ((currentEventIndex + NUM_ROW) <= (track.events.length - 1)) {
                 ++currentEventIndex;
@@ -884,11 +884,11 @@ function* doEditor(trackEdit,seqEditor) {
             cancelEvent = true;
           }
           break;
-        case InputCommand.pageDown:// Page Down キー
+        case InputCommand.pageDown.id:// Page Down キー
           {
-            if(currentEventIndex < (track.events.length - 1) ){
+            if (currentEventIndex < (track.events.length - 1)) {
               currentEventIndex += NUM_ROW;
-              if(currentEventIndex > (track.events.length - 1) ){
+              if (currentEventIndex > (track.events.length - 1)) {
                 currentEventIndex -= NUM_ROW;
               } else {
                 drawEvent();
@@ -898,11 +898,11 @@ function* doEditor(trackEdit,seqEditor) {
             cancelEvent = true;
           }
           break;
-        case InputCommand.pageUp:// Page Up キー
+        case InputCommand.pageUp.id:// Page Up キー
           {
-            if(currentEventIndex > 0){
+            if (currentEventIndex > 0) {
               currentEventIndex -= NUM_ROW;
-              if(currentEventIndex < 0){
+              if (currentEventIndex < 0) {
                 currentEventIndex = 0;
               }
               drawEvent();
@@ -912,9 +912,9 @@ function* doEditor(trackEdit,seqEditor) {
           }
           break;
         // スクロールアップ
-        case InputCommand.scrollUp: 
+        case InputCommand.scrollUp.id:
           {
-            if(currentEventIndex > 0){
+            if (currentEventIndex > 0) {
               --currentEventIndex;
               drawEvent();
               focusEvent();
@@ -922,9 +922,9 @@ function* doEditor(trackEdit,seqEditor) {
           }
           break;
         // スクロールダウン
-        case InputCommand.scrollDown: 
+        case InputCommand.scrollDown.id:
           {
-            if((currentEventIndex + NUM_ROW) <= (track.events.length - 1)){
+            if ((currentEventIndex + NUM_ROW) <= (track.events.length - 1)) {
               ++currentEventIndex;
               drawEvent();
               focusEvent();
@@ -932,8 +932,8 @@ function* doEditor(trackEdit,seqEditor) {
           }
           break;
         // 先頭行に移動
-        case InputCommand.home:
-          if(currentEventIndex > 0){
+        case InputCommand.home.id:
+          if (currentEventIndex > 0) {
             rowIndex = 0;
             currentEventIndex = 0;
             drawEvent();
@@ -942,9 +942,8 @@ function* doEditor(trackEdit,seqEditor) {
           cancelEvent = true;
           break;
         // 最終行に移動
-        case InputCommand.end:
-          if(currentEventIndex != (track.events.length - 1))
-          {
+        case InputCommand.end.id:
+          if (currentEventIndex != (track.events.length - 1)) {
             rowIndex = 0;
             currentEventIndex = track.events.length - 1;
             drawEvent();
@@ -953,11 +952,14 @@ function* doEditor(trackEdit,seqEditor) {
           cancelEvent = true;
           break;
         // 行削除
-        case InputCommand.delete:
+        case InputCommand.delete.id:
           {
+            if((rowIndex + currentEventIndex) == (track.events.length - 1)){
+              break;
+            }
             seqEditor.undoManager.exec(
               {
-                exec(){
+                exec() {
                   this.rowIndex = rowIndex;
                   this.currentEventIndex = currentEventIndex;
                   this.event = track.events[this.rowIndex];
@@ -969,7 +971,7 @@ function* doEditor(trackEdit,seqEditor) {
                   drawEvent();
                   focusEvent();
                 },
-                redo(){
+                redo() {
                   this.lineBuffer = lineBuffer;
                   lineBuffer = this.event;
                   editView.node().deleteRow(this.rowIndex);
@@ -977,57 +979,77 @@ function* doEditor(trackEdit,seqEditor) {
                   drawEvent();
                   focusEvent();
                 },
-                undo(){
+                undo() {
                   lineBuffer = this.lineBuffer;
-                  track.insertEvent(this.event,this.currentEventIndex + this.rowIndex);
+                  track.insertEvent(this.event, this.currentEventIndex + this.rowIndex);
                   drawEvent();
                   focusEvent();
                 }
               }
-            );
+              );
           }
-        break;
+          break;
         // ラインバッファの内容をペーストする
-        case InputCommand.linePaste:
+        case InputCommand.linePaste.id:
           {
-            if(lineBuffer){
+            if (lineBuffer) {
               seqEditor.undoManager.exec(
                 {
-                  exec(){
+                  exec() {
                     this.rowIndex = rowIndex;
                     this.lineBuffer = lineBuffer;
-                    track.insertEvent(lineBuffer.clone(),rowIndex);
+                    track.insertEvent(lineBuffer.clone(), rowIndex);
                     drawEvent();
                     focusEvent();
                   },
-                  redo(){
-                    track.insertEvent(this.lineBuffer.clone(),this.rowIndex);
+                  redo() {
+                    track.insertEvent(this.lineBuffer.clone(), this.rowIndex);
                     drawEvent();
                     focusEvent();
                   },
-                  undo(){
+                  undo() {
                     track.deleteEvent(this.rowIndex);
                     drawEvent();
                     focusEvent();
                   }
                 }
-              );
+                );
             }
             cancelEvent = true;
           }
-        break;
+          break;
         // redo   
-        case InputCommand.redo:
+        case InputCommand.redo.id:
           seqEditor.undoManager.redo();
           cancelEvent = true;
           break;
         // undo  
-        case InputCommand.undo:
+        case InputCommand.undo.id:
           seqEditor.undoManager.undo();
           cancelEvent = true;
           break;
         // 小節線挿入
-        case InputCommand.insertMeasure:// *
+        case InputCommand.insertMeasure.id:// *
+          seqEditor.undoManager.exec(
+            {
+              exec() {
+                this.index = rowIndex + currentEventIndex;
+                track.insertEvent(new audio.Measure(), this.index);
+                drawEvent();
+                focusEvent();
+              },
+              redo() {
+                track.insertEvent(new audio.Measure(), this.index);
+                drawEvent();
+                focusEvent();
+              },
+              undo() {
+                track.deleteEvent(this.index);
+                drawEvent();
+                focusEvent();
+              }
+            }
+            );
           cancelEvent = true;
           break;
         // デフォルト

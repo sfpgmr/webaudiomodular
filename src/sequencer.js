@@ -12,9 +12,6 @@ export class EventBase {
 		this.measure = 0;
 		this.name =  name;
 	}
-  clone(){
-    return new EventBase(this.step,this.name);
-  }
 }
 
 export function setValueAtTime(audioParam,value,time)
@@ -52,6 +49,9 @@ export class Measure extends EventBase {
 		this.type = EventType.Measure;
     this.stepTotal = 0;
 	}
+  clone(){
+    return new Measure();
+  }
   process(){
     
   }
@@ -287,9 +287,11 @@ export class Track extends EventEmitter {
 	}
   
   calcMeasureStepTotal(index){
+    let indexAfter = index +1;
     let events = this.events;
     let stepTotal = 0;
     let event = events[index];
+    // 挿入したメジャーのstepTotalを補正
     if(event.type == EventType.Measure){
       --index;
       while(index >= 0){
@@ -303,15 +305,23 @@ export class Track extends EventEmitter {
         --index;
       }
       event.stepTotal = stepTotal;
+      // 後続のメジャーのstepTotalを補正
       stepTotal = 0;
-      while(index < (events.length - 1)){
-        ++index;
-        let ev = events[index];
-        if(ev.type == EventType.Measure){
-          ev.stepTotal = stepTotal;
-          break;
+      if(indexAfter >= (events.length -1))
+      {
+        return;
+      }
+      if(events[indexAfter].type == EventType.Measure){
+        events[indexAfter].stepTotal = 0;
+        return;
+      }
+      while(indexAfter < (events.length - 1) )
+      {
+        if(events[indexAfter].type != EventType.Measure){
+          stepTotal += events[indexAfter++].step;
         } else {
-          stepTotal += ev.step;
+          events[indexAfter].stepTotal = stepTotal;
+          break;
         }
       }
       return;
