@@ -3,7 +3,6 @@ import * as audio from './audio';
 import * as ui from './ui';
 import {UndoManager} from './undo';
 
-
 const InputType = {
   keybord: 0,
   midi: 1
@@ -424,7 +423,7 @@ export class SequenceEditor {
       .attr({ 'type': 'text', 'size': '3', 'id': 'time-base' })
       .attr('value', (v) => v)
       .on('change', function () {
-        sequencer.audioNode.tpb = d3.select(this).attr('value');
+        sequencer.audioNode.tpb = parseFloat(d3.event.target.value) || d3.select(this).attr('value');
       })
       .call(function () {
         sequencer.audioNode.on('tpb_changed', (v) => {
@@ -436,11 +435,11 @@ export class SequenceEditor {
     // テンポ
     div.append('span').text('Tempo:');
     div.append('input')
-      .datum(sequencer)
+//      .datum(sequencer)
       .attr({ 'type': 'text', 'size': '3' })
       .attr('value', (d) => sequencer.audioNode.bpm)
-      .on('change', () => {
-        sequencer.audioNode.bpm = parseFloat(d3.select(this).attr('value'));
+      .on('change', function() {
+        sequencer.audioNode.bpm = parseFloat(d3.event.target.value);
       })
       .call(function () {
         sequencer.audioNode.on('bpm_changed', (v) => {
@@ -452,7 +451,7 @@ export class SequenceEditor {
     div.append('input')
       .datum(sequencer)
       .attr({ 'type': 'text', 'size': '3', 'value': (d) => sequencer.audioNode.beat })
-      .on('change', (d) => {
+      .on('change', function(d){
         sequencer.audioNode.beat = parseFloat(d3.select(this).attr('value'));
       });
 
@@ -460,7 +459,7 @@ export class SequenceEditor {
     div.append('input')
       .datum(sequencer)
       .attr({ 'type': 'text', 'size': '3', 'value': (d) => sequencer.audioNode.bar })
-      .on('change', (d) => {
+      .on('change', function(d) {
         sequencer.audioNode.bar = parseFloat(d3.select(this).attr('value'));
       });
 
@@ -746,7 +745,36 @@ function* doEditor(trackEdit, seqEditor) {
     drawEvent();
     focusEvent();
   }
-
+  
+  function addRow(delta)
+  {
+    rowIndex += delta;
+    let rowLength = editView.node().rows.length;
+    if(rowIndex >= rowLength){
+      let d = rowIndex - rowLength + 1;
+      rowIndex = rowLength - 1;
+      if((currentEventIndex + NUM_ROW -1) < (track.events.length - 1)){
+        currentEventIndex += d;
+        if((currentEventIndex + NUM_ROW -1) > (track.events.length - 1)){
+          currentEventIndex = (track.events.length - NUM_ROW + 1);
+        }
+      }
+      drawEvent();
+    }
+    if(rowIndex < 0){
+      let d = rowIndex;
+      rowIndex = 0;
+      if(currentEventIndex != 0){
+        currentEventIndex += d;
+        if(currentEventIndex < 0){
+          currentEventIndex = 0;
+        }
+        drawEvent();
+      } 
+    }
+    focusEvent();
+  }
+    
   drawEvent();
   while (true) {
     console.log('new line', rowIndex, track.events.length);
@@ -777,12 +805,11 @@ function* doEditor(trackEdit, seqEditor) {
               if (rowIndex < (curRow.length - 1)) {
                 if (d3.select(curRow[rowIndex]).attr('data-new')) {
                   endNewInput();
+                  break;
                 } else {
-                  ++rowIndex;
+                  addRow(1);
+                  break;
                 }
-              } else {
-                cancelEvent = true;
-                break;
               }
             }
             focusEvent();
@@ -831,14 +858,14 @@ function* doEditor(trackEdit, seqEditor) {
             let curRow = editView.node().rows;
             --cellIndex;
             if (cellIndex < 2) {
-              if (rowIndex == 0) {
-
-              } else {
+              if (rowIndex != 0) {
                 if (d3.select(curRow[rowIndex]).attr('data-new')) {
                   endNewInput(false);
+                  break;
                 }
-                --rowIndex;
                 cellIndex = editView.node().rows[rowIndex].cells.length - 1;
+                addRow(-1);
+                break;
               }
             }
             focusEvent();
@@ -850,17 +877,8 @@ function* doEditor(trackEdit, seqEditor) {
             let curRow = editView.node().rows;
             if (d3.select(curRow[rowIndex]).attr('data-new')) {
               endNewInput(false);
-            }
-            if (rowIndex > 0) {
-              --rowIndex;
-              focusEvent();
             } else {
-              if (currentEventIndex > 0) {
-                --currentEventIndex;
-                drawEvent();
-                rowIndex = 0;
-                focusEvent();
-              }
+              addRow(-1);
             }
             cancelEvent = true;
           }
@@ -871,16 +889,7 @@ function* doEditor(trackEdit, seqEditor) {
             if (d3.select(curRow[rowIndex]).attr('data-new')) {
               endNewInput(false);
             }
-            if (rowIndex == (NUM_ROW - 1)) {
-              if ((currentEventIndex + NUM_ROW) <= (track.events.length - 1)) {
-                ++currentEventIndex;
-                drawEvent();
-                focusEvent();
-              }
-            } else {
-              ++rowIndex;
-              focusEvent();
-            }
+            addRow(1);
             cancelEvent = true;
           }
           break;

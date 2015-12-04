@@ -71,6 +71,9 @@ gulp.task('js',function(){
     .on("error", function (err) { console.log("Error : " + err.message); })
     .pipe(source('bundle.js'))
     .pipe(gulp.dest('./dist'));
+
+    gulp.src('./lib/Dexie.js')
+    .pipe(gulp.dest('./dist/'));
 });
 
 // JSのビルド

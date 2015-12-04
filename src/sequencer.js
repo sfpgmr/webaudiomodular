@@ -404,6 +404,7 @@ export class Sequencer extends EventEmitter {
 		prop.defObservable(this,'repeat');
 
 		this.bpm = 120.0; // tempo
+    
 		this.tpb = 96.0; // 四分音符の解像度
 		this.beat = 4;
 		this.bar = 4; // 
@@ -430,15 +431,16 @@ export class Sequencer extends EventEmitter {
 		this.status_ = SEQ_STATUS.STOPPED;
 
 		//
-		this.on('bpm_chaneged',()=>{this.calcStepTime();});
-		this.on('tpb_chaneged',()=>{this.calcStepTime();});
+		this.on('bpm_changed',()=>{this.calcStepTime();});
+		this.on('tpb_changed',()=>{this.calcStepTime();});
 
 		Sequencer.sequencers.push(this);
 		if(Sequencer.added){
 			Sequencer.added();
 		}
 	}
-	
+
+  
 
 	dispose(){
 		for(var i = 0;i < Sequencer.sequencers.length;++i)

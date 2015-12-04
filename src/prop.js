@@ -9,9 +9,9 @@ export function defObservable(target,propName,opt = {})
 		opt.get = opt.get || (() => v_);
 		opt.set = opt.set || ((v)=>{
 			if(v_ != v){
-				target.emit(propName + '_changed',v);
+  			v_ = v;
+  			target.emit(propName + '_changed',v);
 			}
-			v_ = v;
 		});
 		Object.defineProperty(target,propName,opt);
 	})();
