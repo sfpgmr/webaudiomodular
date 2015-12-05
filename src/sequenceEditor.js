@@ -497,7 +497,6 @@ export class SequenceEditor {
       sequencer.audioNode.tracks[0].addEvent(new audio.Measure());
     }
 
-    console.log(JSON.stringify(audio.ctx.createGain()));
     // トラックエディタメイン
 
     trackEdit.each(function (d) {
