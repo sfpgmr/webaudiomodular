@@ -5,6 +5,14 @@ var counter = 0;
 export var ctx;
 export function setCtx(c){ctx = c;}
 
+export function updateCounter(v)
+{
+  if(v > counter){
+    counter = v;
+    ++counter;
+  }
+}
+
 export class NodeViewBase {
 	constructor(x = 0, y = 0,width = ui.nodeWidth,height = ui.nodeHeight,name = '') {
 		this.x = x ;
@@ -45,6 +53,7 @@ export class ParamView extends NodeViewBase {
 		this.isOutput = isoutput || false;
 	}
 }
+
 
 export class AudioNodeView extends NodeViewBase {
 	constructor(audioNode,editor)
@@ -139,6 +148,25 @@ export class AudioNodeView extends NodeViewBase {
 		this.panel = null;
 		this.editor = editor.bind(this,this);
 	}
+  
+  toJSON(){
+    let ret = {};
+    ret.id = this.id;
+    ret.x = this.x;
+		ret.y = this.y;
+		ret.name = this.name;
+    if(this.audioNode.toJSON){
+      ret.audioNode = this.audioNode;
+    } else {
+      ret.params = {};
+      this.params.forEach((d)=>{
+        if(d.set){
+          ret.params[d.name] = d.get();
+        }
+      });
+    }
+    return ret;
+  }
 	
 	// ノードの削除
 	static remove(node) {

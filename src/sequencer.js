@@ -14,6 +14,12 @@ export class EventBase {
 	}
 }
 
+const CommandType = {
+  setValueAtTime:0,
+  linearRampToValueAtTime:1,
+  exponentialRampToValueAtTime:2  
+}
+
 export function setValueAtTime(audioParam,value,time)
 {
 	audioParam.setValueAtTime(value,time);
@@ -27,19 +33,39 @@ export function exponentialRampToValueAtTime(audioParam,value,time){
 	audioParam.linearRampToValueAtTime(value,time);
 }
 
+const commandFuncs =[
+  setValueAtTime,
+  linearRampToValueAtTime,
+  exponentialRampToValueAtTime
+];
+
 
 export class Command {
-	constructor(pitchCommand = setValueAtTime,velocityCommand = setValueAtTime)
+	constructor(pitchCommand = CommandType.setValueAtTime,velocityCommand = CommandType.setValueAtTime)
 	{
-		this.processPitch = pitchCommand.bind(this);
-		this.processVelocity = velocityCommand.bind(this);
+    this.pitchCommand = pitchCommand;
+    this.velocityCommand = velocityCommand;
+		this.processPitch = commandFuncs[pitchCommand].bind(this);
+		this.processVelocity = commandFuncs[velocityCommand].bind(this);
 	}
+  
+  toJSON()
+  {
+    return {
+      pitchCommand:this.pitchCommand,
+      velocityCommand:this.velocityCommand
+    };
+  }
+  
+  static fromJSON(o){
+    return new Command(o.pitchCommand,o.velocityCommand);
+  }
 }
 
 export const EventType  = {
-	Note:Symbol(),
-	Measure:Symbol(),
-	TrackEnd:Symbol()
+	Note:0,
+	Measure:1,
+	TrackEnd:2
 }
 
 // 小節線
@@ -48,10 +74,38 @@ export class Measure extends EventBase {
 		super(0);
 		this.type = EventType.Measure;
     this.stepTotal = 0;
+    this.startIndex = 0;
+    this.endIndex = 0;
 	}
+  
+  toJSON(){
+    return {
+      name:'Measure',
+      measure:this.measure,
+      stepNo:this.stepNo,
+      step:this.step,
+      type:this.type,
+      stepTotal:this.stepTotal,
+      startIndex:this.startIndex,
+      endIndex:this.endIndex
+    };
+  }
+  
+  static fromJSON(o){
+    let ret = new Measure();
+    ret.measure = o.measure;
+    ret.stepNo = o.stepNo;
+    ret.step = o.step;
+    ret.stepTotal = o.stepTotal;
+    ret.startIndex = o.startIndex;
+    ret.endIndex = o.endIndex;
+    return ret;
+  }
+  
   clone(){
     return new Measure();
   }
+  
   process(){
     
   }
@@ -97,6 +151,27 @@ export class NoteEvent extends EventBase {
 		this.setNoteName();
 	}
 	
+   toJSON(){
+     return {
+       name:'NoteEvent',
+       measure:this.measure,
+       stepNo:this.stepNo,
+       step:this.step,
+       note:this.note,
+       gate:this.gate,
+       vel:this.vel,
+       command:this.command,
+       type:this.type
+     }
+   }
+   
+   static fromJSON(o){
+     let ret = new NoteEvent(o.step,o.note,o.gate,o.vel,Command.fromJSON(o.command));
+     ret.measure = o.measure;
+     ret.stepNo = o.stepNo;
+     return ret;
+   }
+  
   clone(){
     return new NoteEvent(this.step,this.note,this.gate,this.vel,this.command);
   }
@@ -203,6 +278,39 @@ export class Track extends EventEmitter {
 		this.transpose = 0;
 	}
 	
+  toJSON()
+  {
+    return {
+      name:'Track',
+      events:this.events,
+      step:this.step,
+      trackName:this.name,
+      transpose:this.transpose
+    };
+  }
+  
+  static fromJSON(o,sequencer)
+  {
+    let ret = new Track(sequencer);
+    ret.step = o.step;
+    ret.name = o.trackName;
+    ret.transpose = o.transpose;
+    o.events.forEach(function(d){
+      switch(d.type){
+        case EventType.Note:
+          ret.addEvent(NoteEvent.fromJSON(d));
+          break;
+        case EventType.Measure:
+          ret.addEvent(Measure.fromJSON(d));
+          break;
+        case EventType.TrackEnd:
+        //何もしない
+        break;
+      }
+    });
+    return ret;
+  }
+  
 	addEvent(ev){
 		if(this.events.length > 1)
 		{
@@ -408,6 +516,7 @@ export class Sequencer extends EventEmitter {
 		this.tpb = 96.0; // 四分音符の解像度
 		this.beat = 4;
 		this.bar = 4; // 
+		this.repeat = false;
 		this.tracks = [];
 		this.numberOfInputs = 0;
 		this.numberOfOutputs = 0;
@@ -427,7 +536,6 @@ export class Sequencer extends EventEmitter {
 		this.currentTime_ = 0;
 		this.currentMeasure_ = 0;
 		this.calcStepTime();
-		this.repeat = false;
 		this.status_ = SEQ_STATUS.STOPPED;
 
 		//
@@ -440,7 +548,30 @@ export class Sequencer extends EventEmitter {
 		}
 	}
 
+  toJSON(){
+    return {
+      name:'Sequencer',
+      bpm:this.bpm,
+      tpb:this.tpb,
+      beat:this.beat,
+      bar:this.bar,
+      tracks:this.tracks,
+      repeat:this.repeat
+    }
+  }
   
+  static fromJSON(o)
+  {
+    let ret = new Sequencer();
+    ret.bpm = o.bpm;
+    ret.tpb = o.tpb;
+    ret.beat = o.beat;
+    ret.bar = o.bar;
+    o.tracks.forEach(function(d){
+      ret.tracks.push(Track.fromJSON(d));
+    });
+    return ret;
+  }
 
 	dispose(){
 		for(var i = 0;i < Sequencer.sequencers.length;++i)

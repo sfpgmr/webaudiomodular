@@ -552,7 +552,7 @@ function showPanel(d){
 	.append('input')
 	.attr({type:"text",value:(d)=>d.get(),readonly:(d)=>d.set?null:'readonly'})
 	.on('change',function(d){
-		let value = this.value;
+		let value = d3.event.target.value;
 		let vn = parseFloat(value);
 		if(isNaN(vn)){
 			d.set(value);

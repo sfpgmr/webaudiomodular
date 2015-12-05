@@ -17,6 +17,28 @@ export class EG {
 		this.outputs = [];
 	}
 	
+  toJSON(){
+    return {
+      name:this.name,
+      attack:this.attack,
+      decay:this.decay,
+      release:this.release,
+      sustain:this.sustain,
+      gain:this.gain
+    };
+  }
+
+  static fromJSON(o){
+    let ret = new EG();
+    ret.name = o.name;
+    ret.attack = o.attack;
+    ret.decay = o.decay;
+    ret.release = o.release;
+    ret.sustain = o.sustain;
+    ret.gain = o.gain;
+    return ret;
+  }
+  
 	connect(c)
 	{
 		if(! (c.to.param instanceof audio.AudioParamView)){
