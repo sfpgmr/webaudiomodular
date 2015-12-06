@@ -481,7 +481,7 @@ export class Track extends EventEmitter {
     } else if(index <= (this.events.length - 1))
     {
         switch(ev.type){
-          case EventType.note:
+          case EventType.Note:
             this.updateStep(index - 1);
             break;
           case EventType.Measure:
@@ -567,6 +567,7 @@ export class Sequencer extends EventEmitter {
     ret.tpb = o.tpb;
     ret.beat = o.beat;
     ret.bar = o.bar;
+    ret.tracks.length = 0;
     o.tracks.forEach(function(d){
       ret.tracks.push(Track.fromJSON(d));
     });

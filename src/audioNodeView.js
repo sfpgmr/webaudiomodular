@@ -1,9 +1,14 @@
 "use strict";
+import UUID from './uuid.core';
 import * as ui from './ui';
 
 var counter = 0;
 export var ctx;
 export function setCtx(c){ctx = c;}
+
+export function getObjectCounter(){
+  return counter;
+}
 
 export function updateCounter(v)
 {
@@ -39,7 +44,7 @@ export function defIsNotAPIObj(this_,v){
 export class AudioParamView extends NodeViewBase {
 	constructor(AudioNodeView,name, param) {
 		super(0,0,ui.pointSize,ui.pointSize,name);
-		this.id = counter++;
+		this.id = UUID.generate();
 		this.audioParam = param;
 		this.AudioNodeView = AudioNodeView;
 	}
@@ -48,7 +53,7 @@ export class AudioParamView extends NodeViewBase {
 export class ParamView extends NodeViewBase {
 	constructor(AudioNodeView,name,isoutput) {
 		super(0,0,ui.pointSize,ui.pointSize,name);
-		this.id = counter++;
+		this.id = UUID.generate();
 		this.AudioNodeView = AudioNodeView;
 		this.isOutput = isoutput || false;
 	}
@@ -60,7 +65,7 @@ export class AudioNodeView extends NodeViewBase {
 	{
 		// audioNode はベースとなるノード
 		super();
-		this.id = counter++;
+		this.id = UUID.generate();
 		this.audioNode = audioNode;
 		this.name = audioNode.constructor.toString().match(/function\s(.*)\(/)[1];
 		this.inputParams = [];
@@ -155,6 +160,7 @@ export class AudioNodeView extends NodeViewBase {
     ret.x = this.x;
 		ret.y = this.y;
 		ret.name = this.name;
+    ret.removable = this.removable;
     if(this.audioNode.toJSON){
       ret.audioNode = this.audioNode;
     } else {
@@ -192,6 +198,23 @@ export class AudioNodeView extends NodeViewBase {
 				}
 			}
 	}
+  
+  // 
+  static removeAllNodeViews(){
+    AudioNodeView.audioNodes.forEach((node)=>{
+      if(node.audioNode.dispose){
+        node.audioNode.dispose();
+      }
+      for (var i = 0; i < AudioNodeView.audioConnections.length; ++i) {
+        let n = AudioNodeView.audioConnections[i];
+        if (n.from.node === node || n.to.node === node) {
+          AudioNodeView.disconnect_(n);
+          AudioNodeView.audioConnections.splice(i--,1);
+        }
+      }
+    });
+    AudioNodeView.audioNodes.length = 0;
+  }
 
   // 
 	static disconnect_(con) {
@@ -278,7 +301,7 @@ export class AudioNodeView extends NodeViewBase {
 		AudioNodeView.audioNodes.push(obj);
 		return obj;
 	}
-	
+  
   // ノード間の接続
 	static connect(from_, to_) {
 		if(from_ instanceof AudioNodeView ){
@@ -370,7 +393,9 @@ export class AudioNodeView extends NodeViewBase {
 			'to': to_
 		});
 	}
+  
 }
+
 
 
 AudioNodeView.audioNodes = [];

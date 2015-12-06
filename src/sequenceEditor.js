@@ -490,12 +490,12 @@ export class SequenceEditor {
     //this.drawEvents(eventBody);
 
     // テストデータ
-    for (var i = 0; i < 127; i += 8) {
-      for (var j = i; j < (i + 8); ++j) {
-        sequencer.audioNode.tracks[0].addEvent(new audio.NoteEvent(48, j, 6));
-      }
-      sequencer.audioNode.tracks[0].addEvent(new audio.Measure());
-    }
+    // for (var i = 0; i < 127; i += 8) {
+    //   for (var j = i; j < (i + 8); ++j) {
+    //     sequencer.audioNode.tracks[0].addEvent(new audio.NoteEvent(48, j, 6));
+    //   }
+    //   sequencer.audioNode.tracks[0].addEvent(new audio.Measure());
+    // }
 
     // トラックエディタメイン
 
@@ -564,8 +564,45 @@ function* doEditor(trackEdit, seqEditor) {
       console.log(this.parentNode.rowIndex - 1);
       rowIndex = this.parentNode.rowIndex - 1;
       cellIndex = this.cellIndex;
-    })
+    });
   }
+  
+  function setBlur(dest){
+    switch(dest){
+       case 'note':
+          return function(){
+            this.on('blur', function (d) {
+              d.setNoteNameToNote(this.innerText);
+              this.innerText = d.name;
+              // NoteNo表示も更新
+              this.parentNode.cells[3].innerText = d.note;
+            });// Note
+          }
+       break;
+       case 'noteName':
+          return function(){
+            this.on('blur', function (d) {
+              let v = parseFloat(this.innerText);
+              if(!isNaN(v)){
+                d.note = parseFloat(this.innerText);
+                this.parentNode.cells[2].innerText = d.name;
+              }
+            });
+          }
+       break;
+    }
+    return function(){
+     this.on('blur',function(d)
+      {
+        let v = parseFloat(this.innerText);
+        if(!isNaN(v)){
+          d[dest] = v;
+        }
+      });
+    }
+
+  }
+  
   
   // 既存イベントの表示
   function drawEvent() {
@@ -582,23 +619,15 @@ function* doEditor(trackEdit, seqEditor) {
           row.append('td').text(d.measure);// Measeure #
           row.append('td').text(d.stepNo);// Step #
           row.append('td').text(d.name).call(setInput)// Note
-            .on('blur', function (d) {
-              d.setNoteNameToNote(this.innerText);
-              this.innerText = d.name;
-              // NoteNo表示も更新
-              this.parentNode.cells[3].innerText = d.note;
-            });// Note
+          .call(setBlur('noteName'));
           row.append('td').text(d.note).call(setInput)// Note #
-            .on('blur', function (d) {
-              d.note = parseFloat(this.innerText);
-              this.parentNode.cells[2].innerText = d.name;
-            });
+          .call(setBlur('note'));
           row.append('td').text(d.step).call(setInput)// Step
-            .on('blur', function (d) {
-              d.step = parseInt(this.innerText);
-            })
-          row.append('td').text(d.gate).call(setInput);// Gate
-          row.append('td').text(d.vel).call(setInput);// Velocity
+          .call(setBlur('step'));
+          row.append('td').text(d.gate).call(setInput)// Gate
+          .call(setBlur('gate'));
+          row.append('td').text(d.vel).call(setInput)// Velocity
+          .call(setBlur('vel'));
           row.append('td').text(d.com).call(setInput);// Command
           break;
         case audio.EventType.Measure:
@@ -664,17 +693,15 @@ function* doEditor(trackEdit, seqEditor) {
         row.append('td');// Measeure #
         row.append('td');// Step #
         row.append('td').call(setInput)
-          .on('blur', function (d) {
-            if (this.innerText != '' && d.setNoteNameToNote(this.innerText)) {
-              this.innerText = d.name;
-              // NoteNo表示も更新
-              this.parentNode.cells[3].innerText = d.note;
-            }
-          });// Note
-        row.append('td').call(setInput);// Note #
-        row.append('td').call(setInput);// Step
-        row.append('td').call(setInput);// Gate
-        row.append('td').call(setInput);// Velocity
+        .call(setBlur('noteName'));
+        row.append('td').call(setInput)// Note #
+        .call(setBlur('note'));
+        row.append('td').call(setInput)// Step
+        .call(setBlur('step'));
+        row.append('td').call(setInput)// Gate
+        .call(setBlur('gate'));
+        row.append('td').call(setInput)// Velocity
+        .call(setBlur('vel'));
         row.append('td').call(setInput);// Command
         row.node().cells[this.cellIndex].focus();
         row.attr('data-new', true);
@@ -711,8 +738,9 @@ function* doEditor(trackEdit, seqEditor) {
     // 1つ前のノートデータがないときや不正データの場合は、デフォルト値を代入する。
     let noteNo = 0;
     if (cellIndex == 2) {
-      let note = editView.node().rows[rowIndex].cells[cellIndex].innerText;
-      ev.setNoteNameToNote(note, (beforeCells[2] ? beforeCells[2].innerText : ''));
+      let note = editView.node().rows[rowIndex].cells[cellIndex].innerText
+       || (beforeCells[2] ? beforeCells[2].innerText : 'C 0');
+      ev.setNoteNameToNote(note, beforeCells[2] ? beforeCells[2].innerText : '');
       noteNo = ev.note;
     } else {
       noteNo = parseFloat(curRow[3].innerText || (beforeCells[3] ? beforeCells[3].innerText : '60'));

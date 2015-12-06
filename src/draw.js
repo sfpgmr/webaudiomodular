@@ -17,11 +17,6 @@ var audioNodeCreators = [];
 
 // Drawの初期化
 export function initUI(){
-	// 出力ノードの作成（削除不可）
-	var out = audio.AudioNodeView.create(audio.ctx.destination,showPanel);
-	out.x = window.innerWidth / 2;
-	out.y = window.innerHeight / 2;
-	out.removable = false;
 	
 	// プレイヤー
 	audio.Sequencer.added = ()=>
@@ -529,7 +524,7 @@ function makePos(x1,y1,x2,y2){
 }
 
 // プロパティパネルの表示
-function showPanel(d){
+export function showPanel(d){
 
 	d3.event.returnValue = false;
 	d3.event.cancelBubble = true;
