@@ -238,6 +238,22 @@ export class NoteEvent extends EventBase {
 	calcPitch(){
 		this.pitch = (440.0 / 32.0) * (Math.pow(2.0,((this.note + this.transpose_ - 9) / 12)));
 	}
+  
+  playOneshot(track){
+    if(this.note){
+				this.transopse = track.transpose;
+				for(let j = 0,je = track.pitches.length;j < je;++j){
+					track.pitches[j].process(new Command(),this.pitch,audio.ctx.currentTime);
+				}
+				
+				for(let j = 0,je = track.velocities.length;j < je;++j){
+					// keyon
+					track.velocities[j].process(new Command(),this.vel,audio.ctx.currentTime);
+					// keyoff
+					track.velocities[j].process(new Command(),0,audio.ctx.currentTime+0.25);
+				}
+    }
+  }
 	
 	process(time,track){
 			if(this.note){

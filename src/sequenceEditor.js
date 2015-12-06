@@ -569,7 +569,7 @@ function* doEditor(trackEdit, seqEditor) {
   
   function setBlur(dest){
     switch(dest){
-       case 'note':
+       case 'noteName':
           return function(){
             this.on('blur', function (d) {
               d.setNoteNameToNote(this.innerText);
@@ -579,7 +579,7 @@ function* doEditor(trackEdit, seqEditor) {
             });// Note
           }
        break;
-       case 'noteName':
+       case 'note':
           return function(){
             this.on('blur', function (d) {
               let v = parseFloat(this.innerText);
@@ -762,6 +762,7 @@ function* doEditor(trackEdit, seqEditor) {
     //            var ev = new audio.NoteEvent(step, noteNo, gate, vel, com);
     // トラックにデータをセット
     track.insertEvent(ev, rowIndex + currentEventIndex);
+    ev.playOneshot(track);
     if (down) {
       if (rowIndex == (NUM_ROW - 1)) {
         ++currentEventIndex;
@@ -774,8 +775,16 @@ function* doEditor(trackEdit, seqEditor) {
     focusEvent();
   }
   
+  function playOneshot(){
+    let ev = track.events[rowIndex + currentEventIndex];
+    if(ev.type === audio.EventType.Note){
+      ev.playOneshot(track);
+    }
+  }
+  
   function addRow(delta)
   {
+    playOneshot();
     rowIndex += delta;
     let rowLength = editView.node().rows.length;
     if(rowIndex >= rowLength){
