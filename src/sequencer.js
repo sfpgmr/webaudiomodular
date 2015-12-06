@@ -567,10 +567,15 @@ export class Sequencer extends EventEmitter {
     ret.tpb = o.tpb;
     ret.beat = o.beat;
     ret.bar = o.bar;
-    ret.tracks.length = 0;
-    o.tracks.forEach(function(d){
-      ret.tracks.push(Track.fromJSON(d));
+    ret.repeat = o.repeat;
+    //ret.tracks.length = 0;
+    o.tracks.forEach(function(d,i){
+      ret.tracks[i] = Track.fromJSON(d,ret);
+			ret['trk' + i + 'g'].track = ret.tracks[i];
+			ret['trk' + i + 'p'].track = ret.tracks[i];
+
     });
+    ret.calcStepTime();
     return ret;
   }
 
