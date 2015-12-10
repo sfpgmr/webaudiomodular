@@ -288,6 +288,11 @@
      border-top:1px solid dashed gray;
 }
 
+  .seq-editor .track table td:hover {
+     background: none;
+     cursor:inherit;
+}
+
   .seq-editor .track:focus {
      outline: 1px solid black;
 }

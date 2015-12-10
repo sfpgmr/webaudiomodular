@@ -586,9 +586,35 @@ function* doEditor(trackEdit, seqEditor) {
               if(!isNaN(v)){
                 d.note = parseFloat(this.innerText);
                 this.parentNode.cells[2].innerText = d.name;
+              } else {
+                if(d.node){
+                  this.innerText = d.note;
+                  this.parentNode.cells[2].innerText = d.name;
+                }
               }
             });
           }
+       break;
+       case 'step':
+         return function(){
+          this.on('blur',function(d)
+            {
+              let v = parseFloat(this.innerText);
+              if(!isNaN(v)){
+                if(d.step != v){
+                  track.updateNoteStep(rowIndex + currentEventIndex,d,v);
+                  drawEvent();
+                  focusEvent();
+                }
+              } else {
+                if(d.step){ 
+                  this.innerText = d.step;
+                } else {
+                  this.innerText = '';
+                }
+              }
+            });
+         }
        break;
     }
     return function(){
@@ -597,6 +623,12 @@ function* doEditor(trackEdit, seqEditor) {
         let v = parseFloat(this.innerText);
         if(!isNaN(v)){
           d[dest] = v;
+        } else {
+          if(d[dest]){
+            this.innerText = d[dest];          
+          } else {
+            this.innerText = '';
+          }
         }
       });
     }
@@ -635,7 +667,7 @@ function* doEditor(trackEdit, seqEditor) {
           row.append('td').text('');// Step #
           row.append('td')
             .attr({ 'colspan': 6, 'tabindex': 0 })
-            .text(' --- (' + d.stepTotal + ') --- ')
+            .text(' --- (' + track.measures[d.measure].stepTotal + ') --- ')
             .on('focus', function () {
               rowIndex = this.parentNode.rowIndex - 1;
             });

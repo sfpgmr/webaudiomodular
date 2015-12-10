@@ -273,11 +273,16 @@ export class NoteEvent extends EventBase {
 }
 
 
-
 export class Track extends EventEmitter {
 	constructor(sequencer){
 		super();
 		this.events = [];
+    this.measures = [];
+    this.measures.push({
+      startIndex:0,
+      endIndex:0,
+      stepTotal:0
+    });
 		this.pointer = 0;
 		this.events.push(new TrackEnd());
 		prop.defObservable(this,'step');
@@ -337,16 +342,31 @@ export class Track extends EventEmitter {
 					ev.measure = before.measure;
 					break;
 				case EventType.Measure:
-					ev.stepNo = 1;
+					ev.stepNo = 0;
 					ev.measure = before.measure + 1;
 					break;
 			}
 		} else {
-			ev.stepNo = 1;
-			ev.measure = 1;
+			ev.stepNo = 0;
+			ev.measure = 0;
 		}
+    
+    switch(ev.type){
+      case EventType.Note:
+        this.measures[ev.measure].endIndex = this.events.length - 2 + 1; 
+        this.measures[ev.measure].stepTotal += ev.step;
+        break;
+      case EventType.Measure:
+        this.measures.push({
+          startIndex:this.events.length - 2 + 2,
+          endIndex:this.events.length - 2,
+          stepTotal:0
+        })
+        break;
+    }
+
 		this.events.splice(this.events.length - 1,0,ev);
-    this.calcMeasureStepTotal(this.events.length - 2);
+    //this.calcMeasureStepTotal(this.events.length - 2);
 	}
 	
 	insertEvent(ev,index){
@@ -358,24 +378,72 @@ export class Track extends EventEmitter {
 					ev.measure = before.measure;
 				break;
 				case EventType.Measure:
-					ev.stepNo = 1;
+					ev.stepNo = 0;
 					ev.measure = before.measure + 1;
 				break;
 			}
 		} else {
-			ev.stepNo = 1;
-			ev.measure = 1;
+			ev.stepNo = 0;
+			ev.measure = 0;
     }
-		this.events.splice(index,0,ev);
-		if(ev.type == EventType.Measure){
-			this.updateStepAndMeasure(index);		
-		} else {
-			this.updateStep(index);		
-    }
-    this.calcMeasureStepTotal(index);
-	}
     
-	updateStep(index){
+		this.events.splice(index,0,ev);
+
+    switch(ev.type){
+      case EventType.Note:
+        this.measures[ev.measure].endIndex = Math.max(this.measures[ev.measure].endIndex,index); 
+        this.measures[ev.measure].stepTotal += ev.step;
+        break;
+      case EventType.Measure:
+        {
+          let endIndex = this.measures[ev.measure].endIndex;
+          this.measures[ev.measure].endIndex = index - 1;
+          
+          // ステップの再計算
+          {
+            let stepTotal = 0;
+            for(let i = this.measures[ev.measure].startIndex,e = this.measures[ev.measure].endIndex + 1;i < e;++i){
+                stepTotal += this.events[i].step;                  
+            }
+            this.measures[ev.measure].stepTotal = stepTotal;
+          }
+          this.measures.splice(ev.measure + 1,0,{
+            startIndex:index + 1,
+            endIndex:endIndex + 1,
+            stepTotal:0
+          });
+          {
+            let stepTotal = 0;
+            for(let i = this.measures[ev.measure + 1].startIndex,e = this.measures[ev.measure + 1].endIndex + 1;i < e;++i){
+                stepTotal += this.events[i].step;                  
+            }
+            this.measures[ev.measure + 1].stepTotal = stepTotal;
+          }
+          
+        }
+        break;
+    }
+    
+    this.updateStep_(index,ev);
+    //this.calcMeasureStepTotal(index);
+	}
+
+  updateNoteStep(index,ev,newStep){
+    let delta = newStep - ev.step;
+    ev.step = newStep;
+    this.updateStep__(index);
+    this.measures[ev.measure].stepTotal += delta;
+  }
+  
+  updateStep_(index,ev){
+ 		if(ev.type == EventType.Measure){
+			this.updateStepAndMeasure__(index);		
+		} else {
+			this.updateStep__(index);		
+    }
+  }  
+
+	updateStep__(index){
 		for(let i = index + 1,e = this.events.length;i<e;++i)
 		{
 			let before = this.events[i-1];
@@ -392,7 +460,7 @@ export class Track extends EventEmitter {
 		}
 	}	
   
-	updateStepAndMeasure(index){
+	updateStepAndMeasure__(index){
 		for(let i = index + 1,e = this.events.length;i<e;++i)
 		{
 			let before = this.events[i-1];
@@ -403,79 +471,79 @@ export class Track extends EventEmitter {
 					current.measure = before.measure;
 				break;
 				case EventType.Measure:
-					current.stepNo = 1;
+					current.stepNo = 0;
 					current.measure = before.measure + 1;
 				break;
 			}			
 		}
 	}
   
-  calcMeasureStepTotal(index){
-    let indexAfter = index +1;
-    let events = this.events;
-    let stepTotal = 0;
-    let event = events[index];
-    // 挿入したメジャーのstepTotalを補正
-    if(event.type == EventType.Measure){
-      --index;
-      while(index >= 0){
-        let ev = events[index];
-        if(ev.type == EventType.Measure)
-        {
-          break;
-        } else {
-          stepTotal +=  ev.step;
-        }
-        --index;
-      }
-      event.stepTotal = stepTotal;
-      // 後続のメジャーのstepTotalを補正
-      stepTotal = 0;
-      if(indexAfter >= (events.length -1))
-      {
-        return;
-      }
-      if(events[indexAfter].type == EventType.Measure){
-        events[indexAfter].stepTotal = 0;
-        return;
-      }
-      while(indexAfter < (events.length - 1) )
-      {
-        if(events[indexAfter].type != EventType.Measure){
-          stepTotal += events[indexAfter++].step;
-        } else {
-          events[indexAfter].stepTotal = stepTotal;
-          break;
-        }
-      }
-      return;
-    } else {
-      // 一つ前のメジャーを探す
-      let startIndex = 0;
-      if(index == 0){
-        startIndex = 0;
-      } else {
-        startIndex = index;
-        while(startIndex > 0){
-          --startIndex;
-          if(this.events[startIndex].type == EventType.Measure)
-          {
-            ++startIndex;
-            break;
-          }
-        }
-      }
-      stepTotal = 0;
-      while(this.events[startIndex].type == EventType.Note)
-      {
-        stepTotal += this.events[startIndex].step;        
-        ++startIndex;
-      }  
-      if(this.events[startIndex].type == EventType.Measure){
-        this.events[startIndex].stepTotal = stepTotal;
-      }
-    }
-  }
+  // calcMeasureStepTotal(index){
+  //   let indexAfter = index +1;
+  //   let events = this.events;
+  //   let stepTotal = 0;
+  //   let event = events[index];
+  //   // 挿入したメジャーのstepTotalを補正
+  //   if(event.type == EventType.Measure){
+  //     --index;
+  //     while(index >= 0){
+  //       let ev = events[index];
+  //       if(ev.type == EventType.Measure)
+  //       {
+  //         break;
+  //       } else {
+  //         stepTotal +=  ev.step;
+  //       }
+  //       --index;
+  //     }
+  //     event.stepTotal = stepTotal;
+  //     // 後続のメジャーのstepTotalを補正
+  //     stepTotal = 0;
+  //     if(indexAfter >= (events.length -1))
+  //     {
+  //       return;
+  //     }
+  //     if(events[indexAfter].type == EventType.Measure){
+  //       events[indexAfter].stepTotal = 0;
+  //       return;
+  //     }
+  //     while(indexAfter < (events.length - 1) )
+  //     {
+  //       if(events[indexAfter].type != EventType.Measure){
+  //         stepTotal += events[indexAfter++].step;
+  //       } else {
+  //         events[indexAfter].stepTotal = stepTotal;
+  //         break;
+  //       }
+  //     }
+  //     return;
+  //   } else {
+  //     // 一つ前のメジャーを探す
+  //     let startIndex = 0;
+  //     if(index == 0){
+  //       startIndex = 0;
+  //     } else {
+  //       startIndex = index;
+  //       while(startIndex > 0){
+  //         --startIndex;
+  //         if(this.events[startIndex].type == EventType.Measure)
+  //         {
+  //           ++startIndex;
+  //           break;
+  //         }
+  //       }
+  //     }
+  //     stepTotal = 0;
+  //     while(this.events[startIndex].type == EventType.Note)
+  //     {
+  //       stepTotal += this.events[startIndex].step;        
+  //       ++startIndex;
+  //     }  
+  //     if(this.events[startIndex].type == EventType.Measure){
+  //       this.events[startIndex].stepTotal = stepTotal;
+  //     }
+  //   }
+  // }
 
   // イベントの削除  
   deleteEvent(index){
@@ -485,27 +553,45 @@ export class Track extends EventEmitter {
       this.events[0].measure = 1;
       this.events[0].stepNo = 1;
       if(this.events.length > 1){
-        switch(ev.type){
-          case EventType.note:
-            this.updateStep(1);
-            break;
-          case EventType.Measure:
-            this.updateStepAndMeasure(1);
-            break;
-        }
+        this.updateStep_(1,ev);
       }
     } else if(index <= (this.events.length - 1))
     {
-        switch(ev.type){
-          case EventType.Note:
-            this.updateStep(index - 1);
-            break;
-          case EventType.Measure:
-            this.updateStepAndMeasure(index - 1);
-            break;
-        }
+        this.updateStep_(index - 1,ev);
     }
-    this.calcMeasureStepTotal(index);
+    //this.calcMeasureStepTotal(index);
+    
+    switch(ev.type)
+    {
+      case EventType.Measure:
+      {
+        let m = this.measures[ev.measure];
+        let mn = this.measures[ev.measure + 1];
+        if(mn){
+          mn.startIndex = m.startIndex + 1;
+          for(let i = ev.measure + 1,e = this.measures.length;i<e;++i){
+              --this.measures[i].endIndex;
+              --this.measures[i].startIndex;
+          }
+          mn.stepTotal += m.stepTotal;
+        } else {
+          if(this.measures.length == 1){
+            --this.measures[0].endIndex;
+          }
+        }
+        this.measures.splice(ev.measure,1);
+      }
+      break;
+      case EventType.Note:
+      {
+        let m = this.measures[ev.measure];
+        if(m.startIndex != index){
+          --m.endIndex;
+        }
+        m.stepTotal -= ev.step;
+      }
+      break;
+    }
   }
 }
 
