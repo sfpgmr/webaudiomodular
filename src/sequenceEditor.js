@@ -28,7 +28,9 @@ const InputCommand =
     scrollUp: { id: 16, name: '高速スクロールアップ' },
     scrollDown: { id: 17, name: '高速スクロールダウン' },
     delete: { id: 18, name: '行削除' },
-    linePaste: { id: 19, name: '行ペースト' }
+    linePaste: { id: 19, name: '行ペースト' },
+    measureUp: {id:20,name:'小節単位の上移動'},
+    measureDown: {id:21,name:'小節単位の下移動'},
   }
 
 //
@@ -494,7 +496,7 @@ export class SequenceEditor {
     //   for (var j = i; j < (i + 8); ++j) {
     //     sequencer.audioNode.tracks[0].addEvent(new audio.NoteEvent(48, j, 6));
     //   }
-    //   sequencer.audioNode.tracks[0].addEvent(new audio.Measure());
+    //   sequencer.audioNode.tracks[0].addEvent(new audio.MeasureEnd());
     // }
 
     // トラックエディタメイン
@@ -662,7 +664,7 @@ function* doEditor(trackEdit, seqEditor) {
           .call(setBlur('vel'));
           row.append('td').text(d.com).call(setInput);// Command
           break;
-        case audio.EventType.Measure:
+        case audio.EventType.MeasureEnd:
           row.append('td').text('');// Measeure #
           row.append('td').text('');// Step #
           row.append('td')
@@ -700,7 +702,7 @@ function* doEditor(trackEdit, seqEditor) {
       case audio.EventType.Note:
         editView.node().rows[rowIndex].cells[cellIndex].focus();
         break;
-      case audio.EventType.Measure:
+      case audio.EventType.MeasureEnd:
         editView.node().rows[rowIndex].cells[2].focus();
         break;
       case audio.EventType.TrackEnd:
@@ -1112,12 +1114,12 @@ function* doEditor(trackEdit, seqEditor) {
             {
               exec() {
                 this.index = rowIndex + currentEventIndex;
-                track.insertEvent(new audio.Measure(), this.index);
+                track.insertEvent(new audio.MeasureEnd(), this.index);
                 drawEvent();
                 focusEvent();
               },
               redo() {
-                track.insertEvent(new audio.Measure(), this.index);
+                track.insertEvent(new audio.MeasureEnd(), this.index);
                 drawEvent();
                 focusEvent();
               },
