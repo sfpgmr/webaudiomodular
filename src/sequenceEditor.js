@@ -29,8 +29,8 @@ const InputCommand =
     scrollDown: { id: 17, name: '高速スクロールダウン' },
     delete: { id: 18, name: '行削除' },
     linePaste: { id: 19, name: '行ペースト' },
-    measureUp: {id:20,name:'小節単位の上移動'},
-    measureDown: {id:21,name:'小節単位の下移動'},
+    measureBefore: {id:20,name:'小節単位の上移動'},
+    measureNext: {id:21,name:'小節単位の下移動'},
   }
 
 //
@@ -115,14 +115,21 @@ const KeyBind =
       altKey: false,
       metaKey: false,
       inputCommand: InputCommand.pageUp
-    }, {
+      },{
         keyCode: 33,
         ctrlKey: false,
         shiftKey: true,
         altKey: false,
         metaKey: false,
         inputCommand: InputCommand.scrollUp
-      }],
+      },{
+      keyCode: 33,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: true,
+      metaKey: false,
+      inputCommand: InputCommand.measureBefore
+      }      ],
     82: [{
       keyCode: 82,
       ctrlKey: true,
@@ -131,7 +138,7 @@ const KeyBind =
       metaKey: false,
       inputCommand: InputCommand.pageUp
     }],
-    34: [{
+    34: [{ // Page Down 
       keyCode: 34,
       ctrlKey: false,
       shiftKey: false,
@@ -145,6 +152,14 @@ const KeyBind =
         altKey: false,
         metaKey: false,
         inputCommand: InputCommand.scrollDown
+      },
+      {
+      keyCode: 34,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: true,
+      metaKey: false,
+      inputCommand: InputCommand.measureNext
       }],
     67: [{
       keyCode: 67,
@@ -317,7 +332,8 @@ const KeyBind =
         altKey: false,
         metaKey: false,
         inputCommand: InputCommand.note
-      }],
+      } 
+      ],
     68: [{
       keyCode: 68,
       note: 'D',
@@ -999,7 +1015,9 @@ function* doEditor(trackEdit, seqEditor) {
               drawEvent();
               focusEvent();
             }
+            cancelEvent = true;
           }
+         
           break;
         // スクロールダウン
         case InputCommand.scrollDown.id:
@@ -1009,6 +1027,44 @@ function* doEditor(trackEdit, seqEditor) {
               drawEvent();
               focusEvent();
             }
+            cancelEvent = true;
+          }
+          break;
+        // 次の小節に移動
+        case InputCommand.measureNext.id:
+          { let measure = track.events[currentEventIndex + rowIndex].measure;
+            if((measure + 1) < track.measures.length){
+              let startIndex = track.measures[measure + 1].startIndex;
+              if((currentEventIndex + NUM_ROW) > startIndex){
+                rowIndex = startIndex - currentEventIndex;
+              } else {
+                currentEventIndex = startIndex - rowIndex;
+                drawEvent();
+              }
+              focusEvent();
+            }
+            cancelEvent = true;
+          }
+          break;
+        // 前の小節に移動
+        case InputCommand.measureBefore.id:
+          {
+            let measure = track.events[currentEventIndex + rowIndex].measure;
+            if(measure > 0){
+              let startIndex = track.measures[measure - 1].startIndex;
+              if(currentEventIndex <= startIndex){
+                rowIndex = startIndex - currentEventIndex;
+              } else {
+                currentEventIndex = startIndex - rowIndex;
+                if(currentEventIndex < 0){
+                  rowIndex -= currentEventIndex;
+                  currentEventIndex = 0;
+                } 
+                drawEvent();                
+              }
+            }
+            focusEvent();
+          cancelEvent = true; 
           }
           break;
         // 先頭行に移動
